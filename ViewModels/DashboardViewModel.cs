@@ -22,6 +22,9 @@ public partial class DashboardViewModel : ObservableObject
     private bool _isConnected;
 
     [ObservableProperty]
+    private bool _hasConnectionError;
+
+    [ObservableProperty]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -47,6 +50,11 @@ public partial class DashboardViewModel : ObservableObject
         RefreshPorts();
         Flasher.CheckFirmware();
         Flasher.GetDeviceHardware = () => IsConnected ? Hardware : null;
+        Flasher.RequestConnectAfterFlash = async () =>
+        {
+            BackToDashboard();
+            await ConnectAsync();
+        };
     }
 
     partial void OnSelectedPortChanged(PortItem? value)
@@ -106,6 +114,7 @@ public partial class DashboardViewModel : ObservableObject
         }
 
         IsBusy = true;
+        HasConnectionError = false;
         StatusMessage = $"Connecting to {SelectedPort.PortName}...";
 
         try
@@ -122,12 +131,14 @@ public partial class DashboardViewModel : ObservableObject
             var hw = await HardwareService.Instance.GetHardwareInfoAsync();
             Hardware = hw;
             IsConnected = true;
+            HasConnectionError = false;
             StatusMessage = $"Connected to {SelectedPort.PortName} ({hw.Model})";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Connection failed: {ex.Message}";
             IsConnected = false;
+            HasConnectionError = true;
             Pm3ProcessService.Instance.StopInteractiveSession();
         }
         finally
@@ -141,6 +152,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         Pm3ProcessService.Instance.StopInteractiveSession();
         IsConnected = false;
+        HasConnectionError = false;
         IsShowingHardwareDetails = false;
         IsShowingOsDetails = false;
         StatusMessage = "Disconnected.";

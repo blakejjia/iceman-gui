@@ -43,6 +43,27 @@
                         </Grid>
 
                         <ui:InfoBar IsOpen="True" Severity="Informational" Message="{Binding StatusMessage}" IsClosable="False" />
+
+                        <!-- Smart Connection Failure Prompt for un-flashed or fresh devices -->
+                        <Border Margin="0,12,0,0" Padding="14,12" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="6"
+                                Visibility="{Binding HasConnectionError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                        <ui:SymbolIcon Symbol="Warning20" FontSize="16" Foreground="{DynamicResource SystemFillColorCautionBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                        <ui:TextBlock Text="Device Unresponsive or Needs Flashing?" FontTypography="BodyStrong" Foreground="{DynamicResource SystemFillColorCautionBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <ui:TextBlock Text="If this Proxmark3 is brand new from factory, un-flashed, or in bootloader mode, it must be flashed with Iceman firmware before connecting."
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ui:Button Grid.Column="1" Content="Flash Firmware Now" Appearance="Primary" Icon="{ui:SymbolIcon Flash24}"
+                                           Command="{Binding ShowOsDetailsCommand}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </ui:Card>
 
@@ -71,11 +92,10 @@
                     </Grid>
                 </ui:CardAction>
 
-                <!-- Action 2: OS Specs & Flasher (Windows 11 Settings pattern with chevron) -->
+                <!-- Action 2: OS Specs & Flasher (Always visible for flashing un-flashed devices) -->
                 <ui:CardAction Command="{Binding ShowOsDetailsCommand}"
                                IsChevronVisible="True"
-                               Margin="0,0,0,20"
-                               Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                               Margin="0,0,0,20">
                     <Grid Margin="0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -87,8 +107,8 @@
                                        Margin="0,0,16,0" 
                                        VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <ui:TextBlock Text="OS Specs" FontTypography="BodyStrong" FontSize="14" />
-                            <ui:TextBlock Text="ARM operating system, bootloader, FPGA bitstreams, and firmware flasher." 
+                            <ui:TextBlock Text="Firmware &amp; OS Flasher" FontTypography="BodyStrong" FontSize="14" />
+                            <ui:TextBlock Text="Flash official Iceman firmware onto un-flashed or new devices, inspect ARM OS, bootloader, and FPGA bitstreams." 
                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
                                           FontSize="12" 
                                           Margin="0,2,0,0" />
@@ -249,12 +269,12 @@
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
                                 <ui:TextBlock Text="ARM OS Build" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.OsVersion, FallbackValue='Not Connected'}" FontTypography="BodyStrong" TextWrapping="Wrap" />
+                                <ui:TextBlock Text="{Binding Hardware.DisplayOsVersion}" FontTypography="BodyStrong" TextWrapping="Wrap" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
                                 <ui:TextBlock Text="ARM Bootloader" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.BootromVersion, FallbackValue='-'}" FontTypography="BodyStrong" TextWrapping="Wrap" />
+                                <ui:TextBlock Text="{Binding Hardware.DisplayBootromVersion}" FontTypography="BodyStrong" TextWrapping="Wrap" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8">
@@ -296,6 +316,12 @@
                                     IsClosable="False" 
                                     Margin="0,0,0,14" />
 
+                        <!-- Target Port Indicator -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <ui:TextBlock Text="Target Serial Port:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ui:TextBlock Text="{Binding Flasher.TargetPort, FallbackValue='None'}" FontFamily="Consolas" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+
                         <!-- Start Flashing Action -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <ui:Button Content="Start Flashing Firmware" Appearance="Primary" Icon="{ui:SymbolIcon Play24}" 
@@ -303,6 +329,10 @@
                             <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,12,0"
                                              Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             <ProgressBar Width="140" Height="6" IsIndeterminate="{Binding Flasher.IsFlashing}" Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" />
+                            <ui:Button Content="Connect to Device" Appearance="Primary" Icon="{ui:SymbolIcon PlugConnected24}" 
+                                       Command="{Binding Flasher.ConnectDeviceAfterFlashCommand}"
+                                       Visibility="{Binding Flasher.IsFlashSuccess, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                       Margin="12,0,0,0" />
                         </StackPanel>
 
                         <!-- Sections shown after flashing execution starts -->

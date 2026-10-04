@@ -56,121 +56,139 @@
                                        Visibility="{Binding IsMifareCardDetected, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </Grid>
 
-                        <!-- UID Big Display Banner -->
-                        <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="16" CornerRadius="8" Margin="0,0,0,16">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <ui:TextBlock Text="Card UID / CSN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                        <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="4" Padding="6,1" Margin="0,0,6,0"
-                                                Visibility="{Binding CurrentTag.HasStandard, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <ui:TextBlock Text="{Binding CurrentTag.Standard}" FontSize="11" Foreground="White" FontWeight="SemiBold" />
-                                        </Border>
-                                    </StackPanel>
-
-                                    <ui:TextBlock Text="{Binding CurrentTag.FormattedUid, FallbackValue='No Card Detected'}" FontSize="28" FontWeight="Bold" FontFamily="Consolas" Margin="0,0,0,4" />
-
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='Place card on antenna and click Scan'}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" FontTypography="BodyStrong" Margin="0,0,12,0" />
-                                        <ui:TextBlock Text="{Binding CurrentTag.Manufacturer}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Visibility="{Binding CurrentTag.HasManufacturer, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    </StackPanel>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="130">
-                                    <ui:Button Content="Copy UID" 
-                                               Icon="{ui:SymbolIcon Copy24}" 
-                                               Command="{Binding CopyUidCommand}" 
-                                               HorizontalAlignment="Stretch" 
-                                               Margin="0,0,0,6" />
-                                    <ui:Button Content="Write New UID" 
-                                               Appearance="Primary" 
-                                               Icon="{ui:SymbolIcon Edit24}" 
-                                               Command="{Binding OpenWriteUidDialogCommand}" 
-                                               Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}" 
-                                               HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                        <!-- Empty State (No Card Detected on Antenna) -->
+                        <Border Visibility="{Binding HasNoTag, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Padding="24,32"
+                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="8">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="TagDismiss24" FontSize="40" Foreground="{DynamicResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                                <ui:TextBlock Text="No Tag Detected" FontTypography="BodyStrong" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                <ui:TextBlock Text="No RFID or NFC tag was detected on the antenna. Place a card and click 'Scan Card'." 
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
+                                              FontSize="12"
+                                              HorizontalAlignment="Center" />
+                            </StackPanel>
                         </Border>
 
-                        <!-- Comprehensive Tag Specifications Grid -->
-                        <Grid Margin="4,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                        <!-- Detected Card Details (Visible only when tag is detected) -->
+                        <StackPanel Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- UID Big Display Banner -->
+                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="16" CornerRadius="8" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                            <!-- Row 0: Standard, Chip Model, Manufacturer -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
-                                <ui:TextBlock Text="Standard / Make" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Standard, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <ui:TextBlock Text="Card UID / CSN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                            <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="4" Padding="6,1" Margin="0,0,6,0"
+                                                    Visibility="{Binding CurrentTag.HasStandard, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ui:TextBlock Text="{Binding CurrentTag.Standard}" FontSize="11" Foreground="White" FontWeight="SemiBold" />
+                                            </Border>
+                                        </StackPanel>
 
-                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
-                                <ui:TextBlock Text="Chip / Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                        <ui:TextBlock Text="{Binding CurrentTag.FormattedUid, FallbackValue='No Card Detected'}" FontSize="28" FontWeight="Bold" FontFamily="Consolas" Margin="0,0,0,4" />
 
-                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,6">
-                                <ui:TextBlock Text="IC Manufacturer" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Manufacturer, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='Place card on antenna and click Scan'}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" FontTypography="BodyStrong" Margin="0,0,12,0" />
+                                            <ui:TextBlock Text="{Binding CurrentTag.Manufacturer}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Visibility="{Binding CurrentTag.HasManufacturer, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </StackPanel>
 
-                            <!-- Row 1: Frequency, UID Length, PRNG -->
-                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,6">
-                                <ui:TextBlock Text="Frequency" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Frequency, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="130">
+                                        <ui:Button Content="Copy UID" 
+                                                   Icon="{ui:SymbolIcon Copy24}" 
+                                                   Command="{Binding CopyUidCommand}" 
+                                                   HorizontalAlignment="Stretch" 
+                                                   Margin="0,0,0,6" />
+                                        <ui:Button Content="Write New UID" 
+                                                   Appearance="Primary" 
+                                                   Icon="{ui:SymbolIcon Edit24}" 
+                                                   Command="{Binding OpenWriteUidDialogCommand}" 
+                                                   Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                                                   HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
-                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,6">
-                                <ui:TextBlock Text="UID Structure" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.UidLength, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                            <!-- Comprehensive Tag Specifications Grid -->
+                            <Grid Margin="4,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,6">
-                                <ui:TextBlock Text="PRNG Detection" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Prng, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                <!-- Row 0: Standard, Chip Model, Manufacturer -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
+                                    <ui:TextBlock Text="Standard / Make" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Standard, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
 
-                            <!-- Row 2: ATQA, SAK, Magic Capabilities -->
-                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
-                                <ui:TextBlock Text="ATQA" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Atqa, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
+                                    <ui:TextBlock Text="Chip / Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
 
-                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
-                                <ui:TextBlock Text="SAK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Sak, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                            </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,6">
+                                    <ui:TextBlock Text="IC Manufacturer" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Manufacturer, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
 
-                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
-                                <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}" FontTypography="BodyStrong" Foreground="LimeGreen" />
-                            </StackPanel>
+                                <!-- Row 1: Frequency, UID Length, PRNG -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,6">
+                                    <ui:TextBlock Text="Frequency" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Frequency, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
 
-                            <!-- Row 3: ATS & Historical Bytes (High-Security / ISO-DEP Cards) -->
-                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,6" Grid.ColumnSpan="2" Visibility="{Binding CurrentTag.HasAts, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <ui:TextBlock Text="Answer To Select (ATS)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.Ats}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                                <ui:TextBlock Text="{Binding CurrentTag.AtsDetails}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CurrentTag.HasAtsDetails, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,6">
+                                    <ui:TextBlock Text="UID Structure" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.UidLength, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
 
-                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,6" Visibility="{Binding CurrentTag.HasHistoricalBytes, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <ui:TextBlock Text="Historical Bytes" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.HistoricalBytes}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                            </StackPanel>
-                        </Grid>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,6">
+                                    <ui:TextBlock Text="PRNG Detection" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Prng, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                </StackPanel>
+
+                                <!-- Row 2: ATQA, SAK, Magic Capabilities -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
+                                    <ui:TextBlock Text="ATQA" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Atqa, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
+                                    <ui:TextBlock Text="SAK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Sak, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
+                                    <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}" FontTypography="BodyStrong" Foreground="LimeGreen" />
+                                </StackPanel>
+
+                                <!-- Row 3: ATS & Historical Bytes (High-Security / ISO-DEP Cards) -->
+                                <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,6" Grid.ColumnSpan="2" Visibility="{Binding CurrentTag.HasAts, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ui:TextBlock Text="Answer To Select (ATS)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Ats}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.AtsDetails}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CurrentTag.HasAtsDetails, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,6" Visibility="{Binding CurrentTag.HasHistoricalBytes, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ui:TextBlock Text="Historical Bytes" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.HistoricalBytes}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </ui:Card>
 

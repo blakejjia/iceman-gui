@@ -36,4 +36,7 @@ public class HardwareInfo
         !string.IsNullOrWhiteSpace(Model) ||
         !string.IsNullOrWhiteSpace(OsVersion) ||
         !string.IsNullOrWhiteSpace(BootromVersion);
+
+    public string DisplayOsVersion => !string.IsNullOrWhiteSpace(OsVersion) ? OsVersion : "Not Connected (Flash device or connect to inspect)";
+    public string DisplayBootromVersion => !string.IsNullOrWhiteSpace(BootromVersion) ? BootromVersion : "-";
 }

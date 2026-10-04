@@ -23,6 +23,7 @@ public partial class TagScannerViewModel : ObservableObject
 
     public bool IsMifareCardDetected => CurrentTag != null && CurrentTag.IsMifare;
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
+    public bool HasNoTag => !HasCurrentTag;
     public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
 
     public string DetectedMagicModeText
@@ -42,6 +43,7 @@ public partial class TagScannerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsMifareCardDetected));
         OnPropertyChanged(nameof(HasCurrentTag));
+        OnPropertyChanged(nameof(HasNoTag));
         OnPropertyChanged(nameof(CanWriteUid));
         OnPropertyChanged(nameof(DetectedMagicModeText));
     }
@@ -132,16 +134,21 @@ public partial class TagScannerViewModel : ObservableObject
         try
         {
             var tag = await TagScanService.Instance.ProgressiveScanAsync();
-            CurrentTag = tag;
             if (!string.IsNullOrEmpty(tag.Uid) || !string.IsNullOrEmpty(tag.CardNumber))
             {
+                CurrentTag = tag;
                 var path = await TagScanService.Instance.AutoSaveScanAsync(tag);
                 LastSavedPath = path;
                 ScanHistory.Insert(0, tag);
             }
+            else
+            {
+                CurrentTag = null;
+            }
         }
         catch (Exception ex)
         {
+            CurrentTag = null;
             Debug.WriteLine($"Scan error: {ex.Message}");
         }
         finally

@@ -37,7 +37,11 @@ public partial class FlasherViewModel : ObservableObject
     [ObservableProperty]
     private string _targetPort = string.Empty;
 
+    [ObservableProperty]
+    private bool _isFlashSuccess;
+
     public Func<Models.HardwareInfo?>? GetDeviceHardware { get; set; }
+    public Func<Task>? RequestConnectAfterFlash { get; set; }
 
     public bool CanFlash => IsFirmwareReady && !IsFlashing;
 
@@ -131,6 +135,7 @@ public partial class FlasherViewModel : ObservableObject
 
         HasFlashingStarted = true;
         IsFlashing = true;
+        IsFlashSuccess = false;
         StatusMessage = $"Starting flash on {port}...";
         FlashLog = $"[*] Initiating safe firmware flash on {port}...\n[*] Arguments: --unlock-bootloader --image bootrom.elf --image fullimage.elf\n\n";
 
@@ -142,16 +147,36 @@ public partial class FlasherViewModel : ObservableObject
             // Flash with bootloader unlock always enabled
             string result = await FlasherService.Instance.FlashDeviceAsync(port, flashBootloader: true);
             FlashLog += result;
-            StatusMessage = "Flashing operation finished. Check log output.";
+
+            if (!result.Contains("[!] Error", StringComparison.OrdinalIgnoreCase) && !result.Contains("Error during flashing", StringComparison.OrdinalIgnoreCase))
+            {
+                IsFlashSuccess = true;
+                StatusMessage = "Flashing succeeded! The device has rebooted into Iceman OS. Click 'Connect to Device' to begin.";
+            }
+            else
+            {
+                IsFlashSuccess = false;
+                StatusMessage = "Flashing completed with errors. Check log output.";
+            }
         }
         catch (Exception ex)
         {
+            IsFlashSuccess = false;
             FlashLog += $"\n[!] Error during flashing: {ex.Message}\n";
             StatusMessage = $"Flash failed: {ex.Message}";
         }
         finally
         {
             IsFlashing = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ConnectDeviceAfterFlashAsync()
+    {
+        if (RequestConnectAfterFlash != null)
+        {
+            await RequestConnectAfterFlash.Invoke();
         }
     }
 
