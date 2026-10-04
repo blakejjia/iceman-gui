@@ -100,7 +100,7 @@ public class Pm3ProcessService
             // If session is not running but we have a port, try to start the persistent session
             if ((_interactiveProcess == null || _interactiveProcess.HasExited) && !string.IsNullOrWhiteSpace(CurrentPort))
             {
-                await StartInteractiveSessionInternalAsync(CurrentPort, 5000);
+                await StartInteractiveSessionInternalAsync(CurrentPort, 12000);
             }
 
             if (_interactiveProcess != null && !_interactiveProcess.HasExited && _interactiveStdin != null)
@@ -273,9 +273,16 @@ public class Pm3ProcessService
                 string clean = AnsiColorParser.StripAnsi(e.Data);
 
                 // Check for session ready prompt
-                if (clean.Contains("pm3 -->") || clean.Contains("Communicating with Proxmark3 over"))
+                if (clean.Contains("pm3 -->") || 
+                    clean.Contains("Communicating with PM3 over") || 
+                    clean.Contains("Communicating with Proxmark3") || 
+                    clean.Contains("remark: READY"))
                 {
                     readyTcs.TrySetResult(true);
+                }
+                else if (clean.Contains("Can't open serial port") || clean.Contains("OFFLINE mode"))
+                {
+                    readyTcs.TrySetResult(false);
                 }
 
                 // Check active interactive command sentinel
@@ -290,7 +297,9 @@ public class Pm3ProcessService
                         _currentCommandOutput = null;
                         tcs.TrySetResult(result);
                     }
-                    else if (!clean.Contains($"rem {_currentCommandMarker}"))
+                    else if (!clean.Contains($"rem {_currentCommandMarker}") &&
+                             !clean.Contains("rem READY") &&
+                             !clean.Contains("remark: READY"))
                     {
                         // Append standard command output line (excluding the rem marker echo)
                         _currentCommandOutput?.AppendLine(e.Data);
@@ -322,6 +331,14 @@ public class Pm3ProcessService
             _interactiveStdin = _interactiveProcess.StandardInput;
             _interactiveProcess.BeginOutputReadLine();
             _interactiveProcess.BeginErrorReadLine();
+
+            // Send rem READY to ensure a newline-terminated output line is emitted when PM3 prompt arrives
+            try
+            {
+                _interactiveStdin.WriteLine("rem READY");
+                _interactiveStdin.Flush();
+            }
+            catch { }
 
             using var cts = new CancellationTokenSource(timeoutMs);
             using (cts.Token.Register(() => readyTcs.TrySetResult(false)))

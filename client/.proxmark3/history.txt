@@ -70,3 +70,21 @@ hf 14a info -h
 foo_invalid_cmd
 rem CMD_DONE_456
 quit
+hw version
+quit
+rem READY
+hw version
+rem DONE
+quit
+rem READY
+hw version
+rem END_256fa152d66d48c1ae1ce414edac3b2d
+quit
+rem READY
+hw version
+rem END_e7cf87dd32ad412198de23643653e597
+quit
+rem READY
+hf 14a info
+rem END_76701b173442455bbb2292310f285f51
+quit

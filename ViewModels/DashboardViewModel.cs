@@ -113,10 +113,10 @@ public partial class DashboardViewModel : ObservableObject
             Pm3ProcessService.Instance.SetPort(SelectedPort.PortName);
             Flasher.TargetPort = SelectedPort.PortName;
 
-            bool ok = await Pm3ProcessService.Instance.StartInteractiveSessionAsync(SelectedPort.PortName);
+            bool ok = await Pm3ProcessService.Instance.StartInteractiveSessionAsync(SelectedPort.PortName, 12000);
             if (!ok)
             {
-                throw new Exception($"Failed to start Proxmark3 session on {SelectedPort.PortName}.");
+                throw new Exception($"Failed to start Proxmark3 session on {SelectedPort.PortName}. Please ensure no other process is holding the port.");
             }
 
             var hw = await HardwareService.Instance.GetHardwareInfoAsync();
