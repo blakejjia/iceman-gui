@@ -9,9 +9,14 @@
 
             <!-- Header -->
             <StackPanel Margin="0,0,0,20">
-                <ui:TextBlock Text="MIFARE Classic Toolkit" FontTypography="Title" />
-                <ui:TextBlock Text="Recover keys, dump all 16 sectors, inspect hex/ASCII data, and modify block 0 / UID on Gen 2 (CUID) or Gen 1a magic cards." 
-                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:TextBlock Text="Block Editing (Advanced)" FontTypography="Title" />
+                    <Border Background="#2E2310" BorderBrush="#854D0E" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <ui:TextBlock Text="Advanced Tool" Foreground="#FBBF24" FontSize="11" FontWeight="SemiBold" />
+                    </Border>
+                </StackPanel>
+                <ui:TextBlock Text="Low-level sector and block hex editor for MIFARE Classic 1K. Recover keys, dump all 16 sectors, and modify individual blocks in-place." 
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0" />
             </StackPanel>
 
             <!-- Actions Bar -->

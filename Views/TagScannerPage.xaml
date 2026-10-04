@@ -47,12 +47,13 @@
                                 <ui:TextBlock Text="Detected Tag Profile" FontTypography="Subtitle" VerticalAlignment="Center" />
                             </StackPanel>
 
-                            <!-- Inline Mifare Toolkit Shortcut (popped directly in Profile when Mifare is found) -->
+                            <!-- Inline Block Editing (Advanced) Shortcut (popped directly in Profile when Mifare is found) -->
                             <ui:Button HorizontalAlignment="Right"
-                                       Content="Open in Mifare Toolkit" 
-                                       Appearance="Primary" 
-                                       Icon="{ui:SymbolIcon ArrowRight24}" 
+                                       Content="Block Editing (Advanced)" 
+                                       Appearance="Secondary" 
+                                       Icon="{ui:SymbolIcon DocumentEdit24}" 
                                        Command="{Binding GoToMifareCommand}"
+                                       ToolTip="Inspect raw 16 sectors, check keys, dump, and write individual blocks"
                                        Visibility="{Binding IsMifareCardDetected, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </Grid>
 
