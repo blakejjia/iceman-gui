@@ -34,7 +34,11 @@ public partial class DashboardViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsShowingMainDashboard))]
     private bool _isShowingHardwareDetails;
 
-    public bool IsShowingMainDashboard => !IsShowingHardwareDetails;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsShowingMainDashboard))]
+    private bool _isShowingOsDetails;
+
+    public bool IsShowingMainDashboard => !IsShowingHardwareDetails && !IsShowingOsDetails;
 
     public FlasherViewModel Flasher { get; } = new();
 
@@ -42,6 +46,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         RefreshPorts();
         Flasher.CheckFirmware();
+        Flasher.GetDeviceHardware = () => IsConnected ? Hardware : null;
     }
 
     partial void OnSelectedPortChanged(PortItem? value)
@@ -55,13 +60,22 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public void ShowHardwareDetails()
     {
+        IsShowingOsDetails = false;
         IsShowingHardwareDetails = true;
+    }
+
+    [RelayCommand]
+    public void ShowOsDetails()
+    {
+        IsShowingHardwareDetails = false;
+        IsShowingOsDetails = true;
     }
 
     [RelayCommand]
     public void BackToDashboard()
     {
         IsShowingHardwareDetails = false;
+        IsShowingOsDetails = false;
     }
 
     [RelayCommand]
@@ -120,6 +134,7 @@ public partial class DashboardViewModel : ObservableObject
         Pm3ProcessService.Instance.StopInteractiveSession();
         IsConnected = false;
         IsShowingHardwareDetails = false;
+        IsShowingOsDetails = false;
         StatusMessage = "Disconnected.";
     }
 

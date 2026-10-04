@@ -20,12 +20,14 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal">
-                        <ui:Button Content="Quick Scan (1s)" Appearance="Primary" Icon="{ui:SymbolIcon Flashlight24}" Command="{Binding QuickScanCommand}" Margin="0,0,12,0" />
+                        <ui:Button Content="Quick Scan (1s)" Appearance="Primary" Icon="{ui:SymbolIcon Scan24}" Command="{Binding QuickScanCommand}" Margin="0,0,12,0" />
                         <ui:Button Content="Full HF &amp; LF Search" Icon="{ui:SymbolIcon Search24}" Command="{Binding FullScanCommand}" Margin="0,0,12,0" />
                         <ui:Button Content="Save Tag Info (JSON)" Icon="{ui:SymbolIcon Save24}" Command="{Binding SaveTagInfoCommand}" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
+                                         Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <ProgressBar Width="120" Height="6" IsIndeterminate="{Binding IsScanning}" Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>

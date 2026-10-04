@@ -20,27 +20,43 @@ public class HardwareService
 
         var info = new HardwareInfo { RawStatus = output };
 
-        // Client version
+        // Client version & compiler & platform
         var clientMatch = Regex.Match(clean, @"Iceman/master/([^\s]+)");
-        if (clientMatch.Success)
-        {
-            info.ClientVersion = clientMatch.Groups[1].Value;
-        }
+        if (clientMatch.Success) info.ClientVersion = clientMatch.Groups[1].Value;
 
-        // Bootrom & OS
+        var clientCompMatch = Regex.Match(clean, @"Compiler\.\.+\s*(MinGW[^\r\n]+)");
+        if (clientCompMatch.Success) info.ClientCompiler = clientCompMatch.Groups[1].Value.Trim();
+
+        var platMatch = Regex.Match(clean, @"Platform\.\.+\s*([^\r\n]+)");
+        if (platMatch.Success) info.Platform = platMatch.Groups[1].Value.Trim();
+
+        // Bootrom, OS & Compiler
         var bootMatch = Regex.Match(clean, @"Bootrom\.\.\.\.\s*([^\r\n]+)");
         if (bootMatch.Success) info.BootromVersion = bootMatch.Groups[1].Value.Trim();
 
         var osMatch = Regex.Match(clean, @"OS\.\.\.\.\.\.\.\.\.\s*([^\r\n]+)");
         if (osMatch.Success) info.OsVersion = osMatch.Groups[1].Value.Trim();
 
+        var armCompMatch = Regex.Match(clean, @"Compiler\.\.+\s*(GCC[^\r\n]+)");
+        if (armCompMatch.Success) info.OsCompiler = armCompMatch.Groups[1].Value.Trim();
+
+        // FPGA
+        var fpgaMatch = Regex.Match(clean, @"fpga_pm3_hf\.ncd image\s*([^\r\n]+)");
+        if (fpgaMatch.Success) info.FpgaBuild = fpgaMatch.Groups[1].Value.Trim();
+
         // Model
         var modelMatch = Regex.Match(clean, @"Firmware\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\s*([^\r\n]+)");
         if (modelMatch.Success) info.Model = modelMatch.Groups[1].Value.Trim();
 
-        // Hardware / Microcontroller
+        // Hardware / Microcontroller & Architecture
         var ucMatch = Regex.Match(clean, @"--=\s*uC:\s*([^\r\n]+)");
         if (ucMatch.Success) info.Processor = ucMatch.Groups[1].Value.Trim();
+
+        var epMatch = Regex.Match(clean, @"--=\s*Embedded Processor:\s*([^\r\n]+)");
+        if (epMatch.Success) info.EmbeddedProcessor = epMatch.Groups[1].Value.Trim();
+
+        var archMatch = Regex.Match(clean, @"--=\s*Architecture identifier:\s*([^\r\n]+)");
+        if (archMatch.Success) info.Architecture = archMatch.Groups[1].Value.Trim();
 
         var sramMatch = Regex.Match(clean, @"--=\s*Internal SRAM size:\s*([^\r\n]+)");
         if (sramMatch.Success) info.SramSize = sramMatch.Groups[1].Value.Trim();

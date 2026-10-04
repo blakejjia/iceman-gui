@@ -37,6 +37,8 @@ public partial class FlasherViewModel : ObservableObject
     [ObservableProperty]
     private string _targetPort = string.Empty;
 
+    public Func<Models.HardwareInfo?>? GetDeviceHardware { get; set; }
+
     public bool CanFlash => IsFirmwareReady && !IsFlashing;
 
     public FlasherViewModel()
@@ -84,6 +86,47 @@ public partial class FlasherViewModel : ObservableObject
         {
             StatusMessage = "No COM port selected. Please select a port on the Dashboard first.";
             return;
+        }
+
+        // Check if device is already verified to be running Iceman firmware
+        var hw = GetDeviceHardware?.Invoke();
+        if (hw != null && hw.IsVerifiedIceman)
+        {
+            string deviceDesc = !string.IsNullOrWhiteSpace(hw.Model) ? hw.Model : "Proxmark3";
+            string osInfo = !string.IsNullOrWhiteSpace(hw.OsVersion) ? $"\n• Installed OS: {hw.OsVersion}" : "";
+            string clientInfo = !string.IsNullOrWhiteSpace(hw.ClientVersion) ? $"\n• Client Build: {hw.ClientVersion}" : "";
+
+            bool proceed = false;
+            try
+            {
+                var msgBox = new Wpf.Ui.Controls.MessageBox
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow,
+                    Title = "Device Already Running Iceman Firmware",
+                    Content = $"Your {deviceDesc} is already running verified Iceman firmware!{osInfo}{clientInfo}\n\nYou are already ready to go! There is usually no need to re-flash unless you are recovering from an error or manually updating.\n\nAre you sure you want to flash again?",
+                    PrimaryButtonText = "Flash Anyway",
+                    CloseButtonText = "Cancel"
+                };
+
+                var dialogResult = await msgBox.ShowDialogAsync();
+                proceed = (dialogResult == Wpf.Ui.Controls.MessageBoxResult.Primary);
+            }
+            catch
+            {
+                var result = System.Windows.MessageBox.Show(
+                    $"Your {deviceDesc} is already running verified Iceman firmware!{osInfo}{clientInfo}\n\nYou are already ready to go! There is usually no need to re-flash unless you are recovering from an error or manually updating.\n\nAre you sure you want to flash again?",
+                    "Device Already Running Iceman Firmware",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Warning
+                );
+                proceed = (result == System.Windows.MessageBoxResult.Yes);
+            }
+
+            if (!proceed)
+            {
+                StatusMessage = "Flashing cancelled: Device is already running verified Iceman firmware.";
+                return;
+            }
         }
 
         HasFlashingStarted = true;

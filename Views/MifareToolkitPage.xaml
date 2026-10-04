@@ -27,7 +27,11 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <ui:TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Right" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,6,0"
+                                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <ui:TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                        </StackPanel>
                         <ProgressBar Width="160" Height="6" Value="{Binding ProgressValue}" Margin="0,4,0,0" />
                     </StackPanel>
                 </Grid>
@@ -54,7 +58,11 @@
                         <ui:TextBlock Text="New UID (4 bytes / 8 hex):" VerticalAlignment="Center" Margin="0,0,12,0" />
                         <ui:TextBox Grid.Column="1" Text="{Binding NewUidInput, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" MaxLength="8" Margin="0,0,12,0" />
                         <CheckBox Grid.Column="2" Content="Gen 2 (CUID direct write)" IsChecked="{Binding IsGen2Cuid}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                        <ui:Button Grid.Column="3" Content="Write New UID" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" Command="{Binding ChangeUidCommand}" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal">
+                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
+                                             Visibility="{Binding ChangeUidCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <ui:Button Content="Write New UID" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" Command="{Binding ChangeUidCommand}" />
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
             </ui:Card>
@@ -74,9 +82,11 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <ui:TextBlock Text="Block Data (32 hex / 16 bytes):" VerticalAlignment="Center" Margin="0,0,12,0" />
-                        <ui:TextBox Grid.Column="1" Text="{Binding EditBlockDataHex, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" MaxLength="32" Margin="0,0,12,0" />
-                        <ui:Button Grid.Column="2" Content="Write Block" Icon="{ui:SymbolIcon ArrowUpload24}" Command="{Binding WriteSelectedBlockCommand}" />
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
+                                             Visibility="{Binding WriteSelectedBlockCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <ui:Button Content="Write Block" Icon="{ui:SymbolIcon ArrowUpload24}" Command="{Binding WriteSelectedBlockCommand}" />
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
             </ui:Card>

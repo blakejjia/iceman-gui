@@ -43,10 +43,16 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsMifareActive));
     }
 
+    public bool IsAppBusy => Dashboard.IsBusy || TagScanner.IsScanning || MifareToolkit.IsBusy || Flasher.IsFlashing;
+
     public MainViewModel()
     {
         Dashboard.PropertyChanged += (s, e) =>
         {
+            if (e.PropertyName == nameof(Dashboard.IsBusy))
+            {
+                OnPropertyChanged(nameof(IsAppBusy));
+            }
             if (e.PropertyName == nameof(Dashboard.SelectedPort))
             {
                 ActivePort = Dashboard.SelectedPort?.PortName ?? "Disconnected";
@@ -66,8 +72,20 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
+        Dashboard.Flasher.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Flasher.IsFlashing))
+            {
+                OnPropertyChanged(nameof(IsAppBusy));
+            }
+        };
+
         TagScanner.PropertyChanged += (s, e) =>
         {
+            if (e.PropertyName == nameof(TagScanner.IsScanning))
+            {
+                OnPropertyChanged(nameof(IsAppBusy));
+            }
             if (e.PropertyName == nameof(TagScanner.CurrentTag))
             {
                 var tag = TagScanner.CurrentTag;
@@ -82,6 +100,14 @@ public partial class MainViewModel : ObservableObject
                         MifareToolkit.CardData.Uid = tag.Uid;
                     }
                 }
+            }
+        };
+
+        MifareToolkit.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MifareToolkit.IsBusy))
+            {
+                OnPropertyChanged(nameof(IsAppBusy));
             }
         };
 

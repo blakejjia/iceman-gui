@@ -3,8 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid>
-        <!-- VIEW 1: Main Dashboard (Expanded Connection Card + Entry to Specs/Flasher) -->
+        <!-- ============================================================== -->
+        <!-- VIEW 1: Main Dashboard (Expanded Connection Card + CardActions) -->
+        <!-- ============================================================== -->
         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Style="{StaticResource FluentEntranceStyle}"
                       Visibility="{Binding IsShowingMainDashboard, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Margin="24">
                 <!-- Header -->
@@ -43,29 +46,63 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Hardware Specs & Flasher Entry Card (Visible when connected) -->
-                <ui:Card Margin="0,0,0,20" Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Grid>
+                <!-- Action 1: Hardware Specs (Windows 11 Settings pattern with chevron) -->
+                <ui:CardAction Command="{Binding ShowHardwareDetailsCommand}"
+                               IsChevronVisible="True"
+                               Margin="0,0,0,12"
+                               Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <ui:SymbolIcon Symbol="DeveloperBoard24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
-                                <ui:TextBlock Text="Hardware Specs &amp; Diagnostics" FontTypography="Subtitle" />
-                            </StackPanel>
-                            <ui:TextBlock Text="Inspect ARM microcontroller specs, measure LF/HF antenna tuning, and manage firmware flashing." 
-                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                        <ui:SymbolIcon Symbol="DeveloperBoard24" 
+                                       FontSize="22" 
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" 
+                                       Margin="0,0,16,0" 
+                                       VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <ui:TextBlock Text="Hardware Specs" FontTypography="BodyStrong" FontSize="14" />
+                            <ui:TextBlock Text="Physical microcontroller architecture, SRAM/Flash memory, and LF/HF antenna tuning." 
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
+                                          FontSize="12" 
+                                          Margin="0,2,0,0" />
                         </StackPanel>
-                        <ui:Button Grid.Column="1" Content="View Hardware Specs &amp; Flasher" Appearance="Primary" Icon="{ui:SymbolIcon ArrowRight24}" Command="{Binding ShowHardwareDetailsCommand}" VerticalAlignment="Center" Margin="16,0,0,0" />
                     </Grid>
-                </ui:Card>
+                </ui:CardAction>
+
+                <!-- Action 2: OS Specs & Flasher (Windows 11 Settings pattern with chevron) -->
+                <ui:CardAction Command="{Binding ShowOsDetailsCommand}"
+                               IsChevronVisible="True"
+                               Margin="0,0,0,20"
+                               Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Symbol="Flash24" 
+                                       FontSize="22" 
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" 
+                                       Margin="0,0,16,0" 
+                                       VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <ui:TextBlock Text="OS Specs" FontTypography="BodyStrong" FontSize="14" />
+                            <ui:TextBlock Text="ARM operating system, bootloader, FPGA bitstreams, and firmware flasher." 
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
+                                          FontSize="12" 
+                                          Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </ui:CardAction>
             </StackPanel>
         </ScrollViewer>
 
-        <!-- VIEW 2: Sub-page (Hardware Specs, Antenna Tuning & Consolidated Flasher Card) -->
+        <!-- ============================================================== -->
+        <!-- VIEW 2: Hardware Specs Sub-page (Microcontroller & Antennas)    -->
+        <!-- ============================================================== -->
         <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Style="{StaticResource FluentEntranceStyle}"
                       Visibility="{Binding IsShowingHardwareDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Margin="24">
                 <!-- Navigation Back Button -->
@@ -73,17 +110,17 @@
 
                 <!-- Sub-page Header -->
                 <StackPanel Margin="0,0,0,20">
-                    <ui:TextBlock Text="Hardware Specs &amp; Diagnostics" FontTypography="Title" />
-                    <ui:TextBlock Text="Detailed hardware specifications, antenna resonance measurements, and firmware flasher." 
+                    <ui:TextBlock Text="Hardware Specs" FontTypography="Title" />
+                    <ui:TextBlock Text="Physical microcontroller details, internal memory architecture, and antenna resonance." 
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
                 </StackPanel>
 
-                <!-- Card 1: Hardware & Firmware Specs -->
+                <!-- Card 1: Microcontroller & Physical Architecture -->
                 <ui:Card Margin="0,0,0,20">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                             <ui:SymbolIcon Symbol="DeveloperBoard24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
-                            <ui:TextBlock Text="Hardware &amp; Firmware Specs" FontTypography="Subtitle" />
+                            <ui:TextBlock Text="Microcontroller &amp; Physical Architecture" FontTypography="Subtitle" />
                         </StackPanel>
 
                         <Grid Margin="4,0">
@@ -97,34 +134,34 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,4">
-                                <ui:TextBlock Text="Firmware Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.Model, FallbackValue='Not Connected'}" FontTypography="BodyStrong" />
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
+                                <ui:TextBlock Text="Microcontroller (uC)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.Processor, FallbackValue='Not Connected'}" FontTypography="BodyStrong" />
                             </StackPanel>
 
-                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,4">
-                                <ui:TextBlock Text="Microcontroller / ARM" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.Processor, FallbackValue='-'}" FontTypography="BodyStrong" />
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
+                                <ui:TextBlock Text="Embedded Processor Core" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.EmbeddedProcessor, FallbackValue='ARM7TDMI'}" FontTypography="BodyStrong" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8">
-                                <ui:TextBlock Text="Client Version" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.ClientVersion, FallbackValue='-'}" FontTypography="BodyStrong" />
+                                <ui:TextBlock Text="Architecture Identifier" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.Architecture, FallbackValue='-'}" FontTypography="BodyStrong" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,8">
-                                <ui:TextBlock Text="Flash Memory" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="Hardware Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.Model, FallbackValue='-'}" FontTypography="BodyStrong" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
+                                <ui:TextBlock Text="Internal SRAM" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.SramSize, FallbackValue='-'}" FontTypography="BodyStrong" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
+                                <ui:TextBlock Text="Embedded Flash Memory" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 <ui:TextBlock Text="{Binding Hardware.FlashMemory, FallbackValue='-'}" FontTypography="BodyStrong" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,4">
-                                <ui:TextBlock Text="ARM Bootrom" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.BootromVersion, FallbackValue='-'}" TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,4">
-                                <ui:TextBlock Text="ARM OS" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding Hardware.OsVersion, FallbackValue='-'}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -138,7 +175,11 @@
                                 <ui:SymbolIcon Symbol="BroadActivityFeed24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
                                 <ui:TextBlock Text="Antenna Tuning (hw tune)" FontTypography="Subtitle" />
                             </StackPanel>
-                            <ui:Button HorizontalAlignment="Right" Content="Measure Antenna" Icon="{ui:SymbolIcon Play24}" Command="{Binding MeasureAntennaCommand}" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
+                                                 Visibility="{Binding MeasureAntennaCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button Content="Measure Antenna" Icon="{ui:SymbolIcon Play24}" Command="{Binding MeasureAntennaCommand}" />
+                            </StackPanel>
                         </Grid>
 
                         <Grid Margin="4,0">
@@ -167,8 +208,80 @@
                         </Grid>
                     </StackPanel>
                 </ui:Card>
+            </StackPanel>
+        </ScrollViewer>
 
-                <!-- Card 3: Firmware Flasher (All information consolidated within ONE card) -->
+        <!-- ============================================================== -->
+        <!-- VIEW 3: OS Specs Sub-page (Operating System & Firmware Flasher) -->
+        <!-- ============================================================== -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Style="{StaticResource FluentEntranceStyle}"
+                      Visibility="{Binding IsShowingOsDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel Margin="24">
+                <!-- Navigation Back Button -->
+                <ui:Button Content="Back to Dashboard" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToDashboardCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
+
+                <!-- Sub-page Header -->
+                <StackPanel Margin="0,0,0,20">
+                    <ui:TextBlock Text="OS Specs" FontTypography="Title" />
+                    <ui:TextBlock Text="ARM operating system, bootloader, compiler builds, FPGA bitstreams, and firmware flasher." 
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
+                </StackPanel>
+
+                <!-- Card 1: Operating System & Firmware Details -->
+                <ui:Card Margin="0,0,0,20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <ui:SymbolIcon Symbol="Desktop24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                            <ui:TextBlock Text="Operating System &amp; Firmware Details" FontTypography="Subtitle" />
+                        </StackPanel>
+
+                        <Grid Margin="4,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
+                                <ui:TextBlock Text="ARM OS Build" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.OsVersion, FallbackValue='Not Connected'}" FontTypography="BodyStrong" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
+                                <ui:TextBlock Text="ARM Bootloader" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.BootromVersion, FallbackValue='-'}" FontTypography="BodyStrong" TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8">
+                                <ui:TextBlock Text="OS Compiler" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.OsCompiler, FallbackValue='-'}" FontTypography="BodyStrong" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,8">
+                                <ui:TextBlock Text="Client Build" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.ClientVersion, FallbackValue='-'}" FontTypography="BodyStrong" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
+                                <ui:TextBlock Text="Client Compiler &amp; Platform" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.ClientCompiler, FallbackValue='-'}" />
+                                <ui:TextBlock Text="{Binding Hardware.Platform, FallbackValue=''}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
+                                <ui:TextBlock Text="FPGA Bitstreams" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding Hardware.FpgaBuild, FallbackValue='fpga_pm3_hf.ncd (2s30vq100)'}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Card 2: Firmware Flasher (Consolidated Flasher Card) -->
                 <ui:Card Margin="0,0,0,20">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
@@ -185,7 +298,10 @@
 
                         <!-- Start Flashing Action -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <ui:Button Content="Start Flashing Firmware" Appearance="Primary" Icon="{ui:SymbolIcon Play24}" Command="{Binding Flasher.FlashCommand}" IsEnabled="{Binding Flasher.CanFlash}" Margin="0,0,12,0" />
+                            <ui:Button Content="Start Flashing Firmware" Appearance="Primary" Icon="{ui:SymbolIcon Play24}" 
+                                       Command="{Binding Flasher.FlashCommand}" IsEnabled="{Binding Flasher.CanFlash}" Margin="0,0,12,0" />
+                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,12,0"
+                                             Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             <ProgressBar Width="140" Height="6" IsIndeterminate="{Binding Flasher.IsFlashing}" Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" />
                         </StackPanel>
 

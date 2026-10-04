@@ -33,7 +33,9 @@
                            IsPaneToggleVisible="True"
                            CompactPaneLength="54"
                            OpenPaneLength="210"
-                           IsPaneOpen="True">
+                           IsPaneOpen="True"
+                           Transition="FadeInWithSlide"
+                           TransitionDuration="220">
 
             <!-- Nav Header -->
             <ui:NavigationView.PaneHeader>
@@ -93,18 +95,28 @@
             <!-- Page Container Overlay -->
             <ui:NavigationView.ContentOverlay>
                 <Grid>
+                    <!-- Global Activity Bar (fluent indeterminate glowing bar at top of window when any operation is running) -->
+                    <ProgressBar Height="2.5"
+                                 VerticalAlignment="Top"
+                                 IsIndeterminate="True"
+                                 Visibility="{Binding IsAppBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                 Panel.ZIndex="999" />
+
                     <!-- Dashboard Page -->
-                    <Border Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:DashboardPage DataContext="{Binding Dashboard}" />
                     </Border>
 
                     <!-- Tag Scanner Page -->
-                    <Border Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:TagScannerPage DataContext="{Binding TagScanner}" />
                     </Border>
 
                     <!-- Mifare Toolkit Page -->
-                    <Border Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" />
                     </Border>
                 </Grid>
