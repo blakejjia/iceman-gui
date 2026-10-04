@@ -1,0 +1,4 @@
+[+] loaded `C:\Users\GRAPE\Downloads\rrg_other-20260802-da509461b734a61994f8e430e3151e9084bf9718\client\/.proxmark3/preferences.json`
+[+] Using UART port COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> quit

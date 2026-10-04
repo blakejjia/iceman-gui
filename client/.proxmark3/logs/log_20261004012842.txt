@@ -1,0 +1,12 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d 8B1231BA120804006263646566676869
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d 8B1231BA120804006263646566676869
+[=] Writing block no 0, key type:A - FFFFFFFFFFFF
+[=] data: 8B 12 31 BA 12 08 04 00 62 63 64 65 66 67 68 69 
+[+] Write ( ok )
+[?] Hint: Try `hf mf rdbl` to verify

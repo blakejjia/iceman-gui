@@ -1,0 +1,23 @@
+[+] About to use the following file:
+[+]    fullimage.elf
+[+] Loading ELF file fullimage.elf
+[+] ELF file version Iceman/master/v4.21611-636-gda509461b-suspect 2026-08-02 01:13:45 567cf9c5f
+
+[+] Waiting for Proxmark3 to appear on COM9
+ found
+[=] Available memory on this board: 512K bytes
+
+[=] Permitted flash range: 0x00102000-0x00180000
+[+] Loading usable ELF segments:
+[+]    0: V 0x00102000 P 0x00102000 (0x0005b454->0x0005b454) [R X] @0x98
+[+]    1: V 0x00200000 P 0x0015d454 (0x00001eb4->0x00001eb4) [R X] @0x5b4f0
+[=] Note: Extending previous segment from 0x5b454 to 0x5d308 bytes
+
+[+] Flashing...
+[+] Writing segments for file: fullimage.elf
+[+]  0x00102000..0x0015f307 [0x5d308 / 746 blocks]
+
+[+] All done
+
+[=] Have a nice day!
+

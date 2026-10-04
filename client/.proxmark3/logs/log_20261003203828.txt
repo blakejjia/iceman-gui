@@ -1,0 +1,22 @@
+[+] About to use the following file:
+[+]    fullimage.elf
+[+] Loading ELF file fullimage.elf
+[+] ELF file version Iceman/master/v4.21611-636-gda509461b-suspect 2026-08-02 01:13:45 567cf9c5f
+
+[+] Waiting for Proxmark3 to appear on COM8
+ found
+[+] Entering bootloader...
+[+] (Press and release the button only to abort)
+[+] Trigger restart...
+[+] Waiting for Proxmark3 to appear on COM8
+
+[!] ERROR: invalid serial port COM8
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports
+[!!] Error: Proxmark3 not found.
+[!] The flashing procedure failed, follow the suggested steps!
+[!] Sending bytes to Proxmark3 failed ( offline )
+[+] All done
+
+[=] Have a nice day!
+

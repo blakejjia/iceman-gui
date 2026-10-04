@@ -49,6 +49,11 @@ public class Pm3ProcessService
             env.Resolve();
         }
 
+        if (string.IsNullOrEmpty(env.ExecutablePath) || !File.Exists(env.ExecutablePath))
+        {
+            throw new FileNotFoundException($"Proxmark3 client executable was not found. Expected 'client\\proxmark3.exe' in '{AppDomain.CurrentDomain.BaseDirectory}' or project folders.");
+        }
+
         var psi = new ProcessStartInfo
         {
             FileName = env.ExecutablePath,

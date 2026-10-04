@@ -1,0 +1,10 @@
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf 14a reader
+
+[+] Using UART port COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf 14a reader
+[+]  UID: 8B 12 31 BA 
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+

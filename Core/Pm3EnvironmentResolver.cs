@@ -20,7 +20,7 @@ public class Pm3EnvironmentResolver
     {
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-        // Candidate 1: Direct child of application directory (Portable Release: <AppDir>\client)
+        // 1. Direct child of application directory (<AppDir>\client)
         string cand1 = Path.Combine(baseDir, "client");
         if (IsValidClientDir(cand1))
         {
@@ -28,25 +28,43 @@ public class Pm3EnvironmentResolver
             return true;
         }
 
-        // Candidate 2: Traverse up parent directories (Dev / Debug mode)
+        // 2. Sibling / parent directories (Development, dotnet run, project root)
         var dirInfo = new DirectoryInfo(baseDir);
-        while (dirInfo != null && dirInfo.Parent != null)
+        while (dirInfo != null)
         {
-            dirInfo = dirInfo.Parent;
-            string cand2 = Path.Combine(dirInfo.FullName, "client");
-            if (IsValidClientDir(cand2))
+            string cand = Path.Combine(dirInfo.FullName, "client");
+            if (IsValidClientDir(cand))
             {
-                SetPaths(cand2, dirInfo.FullName);
+                SetPaths(cand, dirInfo.FullName);
                 return true;
             }
+            dirInfo = dirInfo.Parent;
         }
 
-        // Candidate 3: Known proxmark3 location in Downloads
-        string cand3 = @"C:\Users\GRAPE\Downloads\proxmark3\client";
-        if (IsValidClientDir(cand3))
+        // 3. Current Working Directory (Environment.CurrentDirectory)
+        string cwd = Environment.CurrentDirectory;
+        string candCwd = Path.Combine(cwd, "client");
+        if (IsValidClientDir(candCwd))
         {
-            SetPaths(cand3, Path.GetDirectoryName(cand3) ?? cand3);
+            SetPaths(candCwd, cwd);
             return true;
+        }
+
+        // 4. Known user locations (Downloads, ProxSpace)
+        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string[] fallbacks = new[]
+        {
+            Path.Combine(userProfile, "Downloads", "proxmark3", "client"),
+            Path.Combine(userProfile, "ProxSpace", "pm3", "proxmark3", "client")
+        };
+
+        foreach (var fb in fallbacks)
+        {
+            if (IsValidClientDir(fb))
+            {
+                SetPaths(fb, Path.GetDirectoryName(fb) ?? fb);
+                return true;
+            }
         }
 
         return false;

@@ -1,0 +1,27 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:/Users/GRAPE/Downloads/proxmark3/client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf mf wrbl -h
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf mf wrbl -h
+
+Write MIFARE Classic block with 16 hex bytes of data
+ 
+Sector 0 / Block 0 - Manufacturer block
+When writing to block 0 you must use a VALID block 0 data (UID, BCC, SAK, ATQA)
+Writing an invalid block 0 means rendering your Magic GEN2 card undetectable. 
+Look in the magic_cards_notes.md file for help to resolve it.
+ 
+`--force` param is used to override warnings like bad ACL and BLOCK 0 writes.
+          if not specified, it will exit if detected
+
+usage:
+    hf mf wrbloptions:
+
+examples/notes:
+    hf mf wrbl --blk 1 -d 000102030405060708090a0b0c0d0e0f
+    hf mf wrbl --blk 1 -k A0A1A2A3A4A5 -d 000102030405060708090a0b0c0d0e0f
+                                  
+

@@ -1,0 +1,6 @@
+[!!] ERROR: cannot parse command line. We got COM9 as port and now we got also: hw
+
+
+syntax: proxmark3.exe [-h|-t|-m|--fulltext]
+        proxmark3.exe [[-p] <port>] [-b] [-w] [-f] [-d <0|1|2>] [--incognito] [--ncpu <num_cores>] [-c "<command>"]|[-l <lua_script_file>]|[-s <cmd_script_file>] [-i] [-- <arg0> <arg1>...]
+        proxmark3.exe [-p] <port> --flash [--unlock-bootloader] [--image <imagefile>]+ [-w] [-f] [-d <0|1|2>]

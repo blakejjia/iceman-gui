@@ -1,0 +1,12 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf 14a reader
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf 14a reader
+[+]  UID: A1 B2 C3 D4 
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+

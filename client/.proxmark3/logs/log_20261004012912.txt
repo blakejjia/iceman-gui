@@ -1,0 +1,39 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hw tune
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hw tune
+
+[=] -------- Reminder ----------------------------
+[=] `hw tune` doesn't actively tune your antennas.
+[=] It's only informative.
+[=] Measuring antenna characteristics...
+
+
+[=] -------- LF Antenna ----------
+[+] 125.00 kHz ........... 25.82 V
+[+] 134.83 kHz ........... 16.51 V
+[+] 120.00 kHz optimal.... 27.80 V
+[+] 
+[+] Approx. Q factor measurement
+[+] Frequency bandwidth... 7.0
+[+] Peak voltage.......... 8.1
+[+] LF antenna............ ok
+
+[=] -------- HF Antenna ----------
+[+] 13.56 MHz............. 20.14 V
+[+] 
+[+] Approx. Q factor measurement
+[+] Peak voltage.......... 5.9
+[+] HF antenna ( ok )
+
+[=] -------- LF tuning graph ------------
+[+] Orange line - divisor 95 / 125.00 kHz
+[+] Blue line - divisor   88 / 134.83 kHz
+
+
+[=] Q factor must be measured without tag on the antenna
+

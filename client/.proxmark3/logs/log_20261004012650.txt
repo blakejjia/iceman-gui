@@ -1,0 +1,32 @@
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hw version
+
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hw tune
+
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf 14a reader
+
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf search; lf search
+
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports

@@ -1,0 +1,6 @@
+[+] loaded `C:\Users\GRAPE\Downloads\rrg_other-20260802-da509461b734a61994f8e430e3151e9084bf9718\client\/.proxmark3/preferences.json`
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports

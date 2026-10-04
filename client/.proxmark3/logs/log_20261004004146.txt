@@ -1,0 +1,5 @@
+[+] loaded `C:/Users/GRAPE/Downloads/proxmark3/client/.proxmark3/preferences.json`
+[+] execute command from commandline: hw version
+
+[+] Using UART port COM9
+[+] Communicating with PM3 over USB-CDC

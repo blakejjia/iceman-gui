@@ -110,12 +110,26 @@ public partial class MainViewModel : ObservableObject
             string port = Dashboard.SelectedPort?.PortName ?? "COM9";
             string rootDir = env.RootDirectory;
 
-            // Spawn native CMD running pm3.bat directly with hardware
+            string batScript = File.Exists(Path.Combine(rootDir, "pm3.bat"))
+                ? Path.Combine(rootDir, "pm3.bat")
+                : (File.Exists(Path.Combine(env.ClientDirectory, "pm3.bat")) ? Path.Combine(env.ClientDirectory, "pm3.bat") : string.Empty);
+
+            string cmdArgs;
+            if (!string.IsNullOrEmpty(batScript))
+            {
+                cmdArgs = $"/k \"cd /d \"{Path.GetDirectoryName(batScript)}\" && call \"{batScript}\" {port}\"";
+            }
+            else
+            {
+                // Direct fallback using setup.bat in client directory
+                cmdArgs = $"/k \"cd /d \"{env.ClientDirectory}\" && if exist setup.bat call setup.bat && proxmark3.exe {port} -w\"";
+            }
+
             var psi = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $"/k \"cd /d \"{rootDir}\" && call pm3.bat {port}\"",
-                WorkingDirectory = rootDir,
+                Arguments = cmdArgs,
+                WorkingDirectory = env.ClientDirectory,
                 UseShellExecute = true,
                 CreateNoWindow = false
             };

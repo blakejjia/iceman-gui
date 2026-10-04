@@ -1,0 +1,18 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:/Users/GRAPE/Downloads/proxmark3/client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf mf csetuid -h
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf mf csetuid -h
+
+Set UID, ATQA, and SAK for magic gen1a card
+
+usage:
+    hf mf csetuidoptions:
+
+examples/notes:
+    hf mf csetuid -u 01020304     
+    hf mf csetuid -w -u 01020304 --atqa 0004 --sak 08
+

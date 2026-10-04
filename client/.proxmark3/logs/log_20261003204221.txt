@@ -1,0 +1,446 @@
+[+] loaded `C:\Users\GRAPE\Downloads\rrg_other-20260802-da509461b734a61994f8e430e3151e9084bf9718\client\/.proxmark3/preferences.json`
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+  [ Proxmark3 ]
+
+    MCU....... AT91SAM7S512 Rev B
+    Memory.... 512 KB ( 74% used )
+    Target.... PM3 GENERIC
+
+    Client.... Iceman/master/v4.21611-636-gda509461b 2026-08-02 01:15:35
+    Bootrom... Iceman/master/v4.21611-636-gda509461b-suspect 2026-08-02 01:13:23 567cf9c5f
+    OS........ Iceman/master/v4.21611-636-gda509461b-suspect 2026-08-02 01:13:45 567cf9c5f
+
+
+[usb|script] pm3 --> auto
+[=] lf search
+
+[=] Note: False Positives ARE possible
+[=] 
+[=] Checking for known tags...
+[=] 
+[=] Press <Enter> to exit
+[=] [110592/500000]
+[=] [368640/500000]
+[=] Done: 500000 samples (500000 bytes)
+[+] Got 500000 samples
+[=] signal looks like noise
+[-] COTAG demod failed - too many Manchester errors  ( 13 Manchester bits at rf/768 )
+
+[=] Searching for auth LF and special cases...
+[=] Couldn't identify a chipset
+[?] Hint: try `hf search` - since tag might not be LF
+
+[=] hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 6B A2 00 BA   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> auto
+[=] lf search
+
+[=] Note: False Positives ARE possible
+[=] 
+[=] Checking for known tags...
+[=] 
+[-] No known 125/134 kHz tags found!
+[=] Searching for auth LF and special cases...
+[=] Couldn't identify a chipset
+[=] hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 95f02753b90804000102030405060708
+
+[=] Targeting Sector 0 / Block 0 - Manufacturer block
+[=] Read the helptext for details before writing to this block
+[=] You must use param `--force` to write to this block
+
+[usb|script] pm3 --> auto
+[=] lf search
+
+[=] Note: False Positives ARE possible
+[=] 
+[=] Checking for known tags...
+[=] 
+[-] No known 125/134 kHz tags found!
+[=] Searching for auth LF and special cases...
+[=] Couldn't identify a chipset
+[=] hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 6B A2 00 BA   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 95f02753b90804000102030405060708 --force
+[=] Writing block no 0, key type:A - FFFFFFFFFFFF
+[=] data: 95 F0 27 53 B9 08 04 00 01 02 03 04 05 06 07 08 
+[+] Write ( ok )
+[?] Hint: Try `hf mf rdbl` to verify
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 3F 0B 4A 6B   ( FNUID, fixed, non-unique ID )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+[#] Static nonce....... 01200145
+[+] Static nonce....... yes
+
+[?] Hint: Try `hf mf info`
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 3F 0B 4A 6B   ( FNUID, fixed, non-unique ID )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+[#] Static nonce....... 01200145
+[+] Static nonce....... yes
+
+[?] Hint: Try `hf mf info`
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> lf search
+
+[=] Note: False Positives ARE possible
+[=] 
+[=] Checking for known tags...
+[=] 
+[+] EM 410x ID 0000002076
+[+] EM410x ( RF/64 )
+[=] -------- Possible de-scramble patterns ---------
+[+] Unique TAG ID      : 000000046E
+[=] HoneyWell IdentKey
+[+]     DEZ 8          : 00008310
+[+]     DEZ 10         : 0000008310
+[+]     DEZ 5.5        : 00000.08310
+[+]     DEZ 3.5A       : 000.08310
+[+]     DEZ 3.5B       : 000.08310
+[+]     DEZ 3.5C       : 000.08310
+[+]     DEZ 14/IK2     : 00000000008310
+[+]     DEZ 15/IK3     : 000000000001134
+[+]     DEZ 20/ZK      : 00000000000000040614
+[=] 
+[+] Other              : 08310_000_00008310
+[+] Pattern Paxton     : 1334902 [0x145E76]
+[+] Pattern 1          : 6456 [0x1938]
+[+] Pattern Sebury     : 8310 0 8310  [0x2076 0x0 0x2076]
+[+] VD / ID            : 000 / 0000008310
+[+] Pattern ELECTRA    : 0 8310
+[=] ------------------------------------------------
+
+[+] Valid EM410x ID found!
+
+[=] Searching for auth LF and special cases...
+[+] UID....... A613DE55
+[+] TYPE...... Probably not NXP Hitag S
+[+] Chipset... Hitag 1/S / 82xx
+[?] Hint: Try `lf hitag hts` commands
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 8B 25 6C BA   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 95f02753b90804000102030405060708
+
+[=] Targeting Sector 0 / Block 0 - Manufacturer block
+[=] Read the helptext for details before writing to this block
+[=] You must use param `--force` to write to this block
+
+[usb|script] pm3 --> hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 95f02753b90804000102030405060708 --force
+[=] Writing block no 0, key type:A - FFFFFFFFFFFF
+[=] data: 95 F0 27 53 B9 08 04 00 01 02 03 04 05 06 07 08 
+[+] Write ( ok )
+[?] Hint: Try `hf mf rdbl` to verify
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 95 F0 27 53   ( ONUID, re-used )
+[+] ATQA: 00 04
+[+]  SAK: 08 [2]
+[+] Possible types:
+[+]    MIFARE Classic 1K
+[=] 
+[=] Proprietary non iso14443-4 card found
+[=] RATS not supported
+
+[+] Magic capabilities... Gen 2 / CUID
+[+] Prng detection..... weak
+
+[?] Hint: Use `hf mf` commands
+
+
+[+] Valid ISO 14443-A tag found
+
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 04 29 07 0A 2A 6D 80   ( double )
+[+] ATQA: 03 44
+[+]  SAK: 20 [1]
+[+]       NXP Semiconductors Germany
+[+] Possible types:
+[+]    MIFARE DESFire EV2 
+[=] -------------------------- ATS ----------------------------------
+[+] ATS: 06 75 77 81 02 80 [ 02 F0 ]
+[=]      06...............  TL    length is 6 bytes
+[=]      ...75............  T0    TA1 is present, TB1 is present, TC1 is present, FSCI is 5 (FSC = 64)
+[=]      ......77.........  TA1   different divisors are supported, DR: [2, 4, 8], DS: [2, 4, 8]
+[=]      .........81......  TB1   SFGI = 1 (SFGT = 8192/fc), FWI = 8 (FWT = 1048576/fc)
+[=]      ............02...  TC1   NAD is NOT supported, CID is supported
+
+[=] -------------------- Historical bytes ---------------------------
+[+] 80  (compact TLV data object)
+
+[?] Hint: Try `hf mfdes info`
+
+
+[+] Valid ISO 14443-A tag found
+
+[?] Hint: Try `hf fido` commands
+[?] Hint: Try `emv` commands
+[?] Hint: Try `emv` commands
+[?] Hint: Try `hf cipurse` commands
+[?] Hint: Try `hf aliro` commands
+[?] Hint: Try `hf mfdes` commands
+[?] Hint: Try `hf gst` commands
+[usb|script] pm3 --> hf search
+
+[=] ---------- ISO14443-A Information ----------
+[+]  UID: 04 8B 71 C2 1F 79 80   ( double )
+[+] ATQA: 03 44
+[+]  SAK: 20 [1]
+[+]       NXP Semiconductors Germany
+[+] Possible types:
+[+]    MIFARE DESFire EV1 
+[=] -------------------------- ATS ----------------------------------
+[+] ATS: 06 75 77 81 02 80 [ 02 F0 ]
+[=]      06...............  TL    length is 6 bytes
+[=]      ...75............  T0    TA1 is present, TB1 is present, TC1 is present, FSCI is 5 (FSC = 64)
+[=]      ......77.........  TA1   different divisors are supported, DR: [2, 4, 8], DS: [2, 4, 8]
+[=]      .........81......  TB1   SFGI = 1 (SFGT = 8192/fc), FWI = 8 (FWT = 1048576/fc)
+[=]      ............02...  TC1   NAD is NOT supported, CID is supported
+
+[=] -------------------- Historical bytes ---------------------------
+[+] 80  (compact TLV data object)
+
+[?] Hint: Try `hf mfdes info`
+
+
+[+] Valid ISO 14443-A tag found
+
+[?] Hint: Try `hf mfdes` commands
+[usb|script] pm3 --> hf search
+[!] No known/supported 13.56 MHz tags found
+[usb|script] pm3 --> lf search
+
+[=] Note: False Positives ARE possible
+[=] 
+[=] Checking for known tags...
+[=] 
+[=] Press <Enter> to exit
+[=] [110592/500000]
+[=] [495616/500000]
+[=] Done: 500000 samples (500000 bytes)
+[+] Got 500000 samples
+[-] COTAG demod failed - too many Manchester errors  ( 65 Manchester bits at rf/768 )
+
+[=] Searching for auth LF and special cases...
+[=] Couldn't identify a chipset
+[?] Hint: try `hf search` - since tag might not be LF
+

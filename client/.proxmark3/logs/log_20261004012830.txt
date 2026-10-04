@@ -1,0 +1,38 @@
+[=] Output will be flushed after every print.
+
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf mf chk --1k
+
+[+] Waiting for Proxmark3 to appear on COM9
+[+] Communicating with PM3 over USB-CDC
+[usb|script] pm3 --> hf mf chk --1k
+[+] loaded 63 hardcoded keys
+[=] Start check for keys...
+[=] .................................
+[=] Time in checkkeys 2 seconds
+
+[=] Testing to read key B...
+
+[+] -----+-----+--------------+---+--------------+----
+[+]  Sec | Blk | key A        |res| key B        |res
+[+] -----+-----+--------------+---+--------------+----
+[+]  000 | 003 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  001 | 007 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  002 | 011 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  003 | 015 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  004 | 019 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  005 | 023 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  006 | 027 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  007 | 031 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  008 | 035 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  009 | 039 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  010 | 043 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  011 | 047 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  012 | 051 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  013 | 055 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  014 | 059 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+]  015 | 063 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1 
+[+] -----+-----+--------------+---+--------------+----
+[+] ( 0:Failed / 1:Success )
+
+

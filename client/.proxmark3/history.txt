@@ -1,0 +1,56 @@
+hw status
+quit
+hw version
+auto
+hf 14a info
+hf search
+hf 14a reader
+hf mf chk --1k
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hf mf rdbl --blk 0 -a -k FFFFFFFFFFFF
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hf mf rdbl --blk 0 -a -k FFFFFFFFFFFF
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hf mf rdbl --blk 0 -a -k FFFFFFFFFFFF
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf mf wrbl -h
+hf mf csetuid -h
+hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d 8B1231BA120804006263646566676869
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d A1B2C3D4040804006263646566676869
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf 14a reader
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d 8B1231BA120804006263646566676869
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf 14a reader
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d A1B2C3D4040804006263646566676869
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf 14a reader
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf mf wrbl --blk 0 --force -k FFFFFFFFFFFF -d 8B1231BA120804006263646566676869
+hf mf rdbl --blk 0 -k FFFFFFFFFFFF
+hf 14a reader
+hw version
+hw tune
+hf 14a reader
+hf mf chk --1k
+hw version

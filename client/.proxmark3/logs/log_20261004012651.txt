@@ -1,0 +1,8 @@
+[+] loaded `C:\Users\GRAPE\Downloads\proxmark3\client/.proxmark3/preferences.json`
+[+] execute command from commandline: hf search; lf search
+
+[+] Using UART port COM9
+
+[!] ERROR: invalid serial port COM9
+
+[?] Hint: Try the shell script ``./pm3 --list` to get a list of possible serial ports
