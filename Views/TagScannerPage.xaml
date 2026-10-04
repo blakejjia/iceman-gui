@@ -98,7 +98,7 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="130">
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
                                         <ui:Button Content="Copy UID" 
                                                    Icon="{ui:SymbolIcon Copy24}" 
                                                    Command="{Binding CopyUidCommand}" 
@@ -110,6 +110,18 @@
                                                    Command="{Binding OpenWriteUidDialogCommand}" 
                                                    Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}" 
                                                    HorizontalAlignment="Stretch" />
+                                        <Border Visibility="{Binding CannotWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Padding="6,5"
+                                                HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Prohibited20" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                                <ui:TextBlock Text="Write tag not supported" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
                                 </Grid>
                             </Border>

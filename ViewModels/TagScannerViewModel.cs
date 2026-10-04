@@ -25,6 +25,7 @@ public partial class TagScannerViewModel : ObservableObject
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
     public bool HasNoTag => !HasCurrentTag;
     public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
+    public bool CannotWriteUid => HasCurrentTag && !CanWriteUid;
 
     public string DetectedMagicModeText
     {
@@ -45,6 +46,7 @@ public partial class TagScannerViewModel : ObservableObject
         OnPropertyChanged(nameof(HasCurrentTag));
         OnPropertyChanged(nameof(HasNoTag));
         OnPropertyChanged(nameof(CanWriteUid));
+        OnPropertyChanged(nameof(CannotWriteUid));
         OnPropertyChanged(nameof(DetectedMagicModeText));
     }
 

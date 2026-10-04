@@ -33,12 +33,6 @@ public partial class MifareToolkitViewModel : ObservableObject
     private int _progressValue;
 
     [ObservableProperty]
-    private string _newUidInput = "11223344";
-
-    [ObservableProperty]
-    private bool _isGen2Cuid = true;
-
-    [ObservableProperty]
     private MifareBlock? _selectedBlock;
 
     [ObservableProperty]
@@ -123,37 +117,6 @@ public partial class MifareToolkitViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    public async Task ChangeUidAsync()
-    {
-        if (string.IsNullOrWhiteSpace(NewUidInput))
-        {
-            StatusMessage = "Please enter an 8-character hex UID (4 bytes).";
-            return;
-        }
-
-        IsBusy = true;
-        StatusMessage = $"Writing new UID [{NewUidInput}] to card...";
-
-        try
-        {
-            var (success, msg) = await MifareService.Instance.ChangeUidAsync(NewUidInput, IsGen2Cuid);
-            StatusMessage = msg;
-            if (success)
-            {
-                CardData.Uid = NewUidInput.ToUpperInvariant();
-                OnPropertyChanged(nameof(CardData));
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"UID change error: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
 
     [RelayCommand]
     public async Task WriteSelectedBlockAsync()
