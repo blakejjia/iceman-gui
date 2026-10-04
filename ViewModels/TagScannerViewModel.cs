@@ -2,8 +2,12 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iceman_gui.Core;
@@ -19,23 +23,73 @@ public partial class TagScannerViewModel : ObservableObject
 
     public bool IsMifareCardDetected => CurrentTag != null && CurrentTag.IsMifare;
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
+    public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
 
     partial void OnCurrentTagChanged(TagInfo? value)
     {
         OnPropertyChanged(nameof(IsMifareCardDetected));
         OnPropertyChanged(nameof(HasCurrentTag));
+        OnPropertyChanged(nameof(CanWriteUid));
     }
 
     [ObservableProperty]
-    private bool _isAutoDetectEnabled = true;
+    private bool _isWritingUidDialogOpen;
 
-    private CancellationTokenSource? _autoDetectCts;
+    [ObservableProperty]
+    private string _writeUidInput = string.Empty;
+
+    [ObservableProperty]
+    private bool _isGen2Cuid = true;
+
+    [ObservableProperty]
+    private bool _isGen1a;
+
+    partial void OnIsGen2CuidChanged(bool value)
+    {
+        if (value && _isGen1a)
+        {
+            _isGen1a = false;
+            OnPropertyChanged(nameof(IsGen1a));
+        }
+    }
+
+    partial void OnIsGen1aChanged(bool value)
+    {
+        if (value && _isGen2Cuid)
+        {
+            _isGen2Cuid = false;
+            OnPropertyChanged(nameof(IsGen2Cuid));
+        }
+    }
+
+    [ObservableProperty]
+    private bool _isWritingUid;
+
+    public bool IsNotWritingUid => !IsWritingUid;
+
+    partial void OnIsWritingUidChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsNotWritingUid));
+    }
+
+    [ObservableProperty]
+    private string _writeUidResult = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasWriteUidResult;
+
+    [ObservableProperty]
+    private bool _isWriteUidSuccess;
+
+    public Brush WriteUidResultBrush => IsWriteUidSuccess ? Brushes.LimeGreen : Brushes.LightCoral;
+
+    partial void OnIsWriteUidSuccessChanged(bool value)
+    {
+        OnPropertyChanged(nameof(WriteUidResultBrush));
+    }
 
     [ObservableProperty]
     private bool _isScanning;
-
-    [ObservableProperty]
-    private string _statusMessage = "Ready to scan tag. Place card on antenna.";
 
     [ObservableProperty]
     private string _lastSavedPath = string.Empty;
@@ -53,61 +107,6 @@ public partial class TagScannerViewModel : ObservableObject
     public TagScannerViewModel()
     {
         _ = LoadHistorySilentlyAsync();
-        StartAutoDetectLoop();
-    }
-
-    private void StartAutoDetectLoop()
-    {
-        _autoDetectCts?.Cancel();
-        _autoDetectCts = new CancellationTokenSource();
-        var token = _autoDetectCts.Token;
-
-        Task.Run(async () =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(1200, token);
-
-                    // Skip auto-detect probing if:
-                    // 1. Feature switch is toggled off
-                    // 2. Currently performing a scan
-                    // 3. A card is already detected and displayed (Rule: "on there is already a card, no more auto detect anymore")
-                    if (!IsAutoDetectEnabled || IsScanning || HasCurrentTag)
-                    {
-                        continue;
-                    }
-
-                    // Check if COM port is active
-                    if (!Pm3ProcessService.Instance.IsConnected)
-                    {
-                        continue;
-                    }
-
-                    // Perform lightweight presence check (~200ms)
-                    bool detected = await TagScanService.Instance.FastProbePresenceAsync(token);
-                    if (detected && !token.IsCancellationRequested && !HasCurrentTag && !IsScanning)
-                    {
-                        await Application.Current.Dispatcher.InvokeAsync(async () =>
-                        {
-                            if (!HasCurrentTag && !IsScanning)
-                            {
-                                await ScanCardAsync();
-                            }
-                        });
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch
-                {
-                    try { await Task.Delay(2000, token); } catch { break; }
-                }
-            }
-        }, token);
     }
 
     [RelayCommand]
@@ -132,7 +131,6 @@ public partial class TagScannerViewModel : ObservableObject
         if (item == null) return;
         CurrentTag = item;
         IsShowingHistory = false;
-        StatusMessage = $"Loaded profile from history: [{item.FormattedUid}] ({item.TagType})";
     }
 
     [RelayCommand]
@@ -140,7 +138,6 @@ public partial class TagScannerViewModel : ObservableObject
     {
         if (IsScanning) return;
         IsScanning = true;
-        StatusMessage = "Progressive scan in progress (Universal auto sweep across LF & HF)...";
 
         try
         {
@@ -151,16 +148,11 @@ public partial class TagScannerViewModel : ObservableObject
                 var path = await TagScanService.Instance.AutoSaveScanAsync(tag);
                 LastSavedPath = path;
                 ScanHistory.Insert(0, tag);
-                StatusMessage = $"Tag Found & Auto-saved: [{tag.FormattedUid}] ({tag.TagType})";
-            }
-            else
-            {
-                StatusMessage = "No tag detected. Ensure card is centered on antenna.";
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Scan error: {ex.Message}";
+            Debug.WriteLine($"Scan error: {ex.Message}");
         }
         finally
         {
@@ -172,9 +164,6 @@ public partial class TagScannerViewModel : ObservableObject
     public void ClearCard()
     {
         CurrentTag = null;
-        StatusMessage = IsAutoDetectEnabled
-            ? "Card cleared. Auto-detect active — place a card on the antenna."
-            : "Card cleared. Ready to scan.";
     }
 
     [RelayCommand]
@@ -189,7 +178,92 @@ public partial class TagScannerViewModel : ObservableObject
         if (CurrentTag != null && !string.IsNullOrEmpty(CurrentTag.Uid))
         {
             Clipboard.SetText(CurrentTag.Uid);
-            StatusMessage = $"Copied UID [{CurrentTag.Uid}] to clipboard!";
+        }
+    }
+
+    [RelayCommand]
+    public void OpenWriteUidDialog()
+    {
+        if (CurrentTag == null || !CanWriteUid) return;
+
+        WriteUidInput = CurrentTag.Uid;
+        if (CurrentTag.IsGen1a)
+        {
+            IsGen1a = true;
+            IsGen2Cuid = false;
+        }
+        else
+        {
+            IsGen2Cuid = true;
+            IsGen1a = false;
+        }
+
+        WriteUidResult = string.Empty;
+        HasWriteUidResult = false;
+        IsWriteUidSuccess = false;
+        IsWritingUidDialogOpen = true;
+    }
+
+    [RelayCommand]
+    public void CloseWriteUidDialog()
+    {
+        IsWritingUidDialogOpen = false;
+    }
+
+    [RelayCommand]
+    public void GenerateRandomUid()
+    {
+        byte[] bytes = new byte[4];
+        RandomNumberGenerator.Fill(bytes);
+        WriteUidInput = Convert.ToHexString(bytes);
+    }
+
+    [RelayCommand]
+    public async Task ExecuteWriteUidAsync()
+    {
+        if (CurrentTag == null || !CanWriteUid) return;
+
+        string cleanHex = WriteUidInput.Replace(" ", "").Replace(":", "").Trim().ToUpperInvariant();
+        if (cleanHex.Length != 8 || !Regex.IsMatch(cleanHex, @"^[0-9A-Fa-f]{8}$"))
+        {
+            WriteUidResult = "UID must be exactly 4 bytes (8 hex characters), e.g. 11223344.";
+            HasWriteUidResult = true;
+            IsWriteUidSuccess = false;
+            OnPropertyChanged(nameof(WriteUidResultBrush));
+            return;
+        }
+
+        IsWritingUid = true;
+        WriteUidResult = $"Writing UID [{cleanHex}] via {(IsGen2Cuid ? "Gen 2 CUID direct write" : "Gen 1a magic backdoor")}...";
+        HasWriteUidResult = true;
+        IsWriteUidSuccess = false;
+        OnPropertyChanged(nameof(WriteUidResultBrush));
+
+        try
+        {
+            var (success, message) = await MifareService.Instance.ChangeUidAsync(cleanHex, isGen2Cuid: IsGen2Cuid);
+            WriteUidResult = message;
+            IsWriteUidSuccess = success;
+            OnPropertyChanged(nameof(WriteUidResultBrush));
+
+            if (success)
+            {
+                CurrentTag.Uid = cleanHex;
+                CurrentTag.FormattedUid = string.Join(" ", Enumerable.Range(0, 4).Select(i => cleanHex.Substring(i * 2, 2)));
+                OnPropertyChanged(nameof(CurrentTag));
+
+                await TagScanService.Instance.AutoSaveScanAsync(CurrentTag);
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteUidResult = $"Write error: {ex.Message}";
+            IsWriteUidSuccess = false;
+            OnPropertyChanged(nameof(WriteUidResultBrush));
+        }
+        finally
+        {
+            IsWritingUid = false;
         }
     }
 
@@ -210,7 +284,7 @@ public partial class TagScannerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Could not open dumps folder: {ex.Message}";
+            Debug.WriteLine($"Could not open dumps folder: {ex.Message}");
         }
     }
 

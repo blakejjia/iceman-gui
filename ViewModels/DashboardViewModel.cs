@@ -112,6 +112,13 @@ public partial class DashboardViewModel : ObservableObject
         {
             Pm3ProcessService.Instance.SetPort(SelectedPort.PortName);
             Flasher.TargetPort = SelectedPort.PortName;
+
+            bool ok = await Pm3ProcessService.Instance.StartInteractiveSessionAsync(SelectedPort.PortName);
+            if (!ok)
+            {
+                throw new Exception($"Failed to start Proxmark3 session on {SelectedPort.PortName}.");
+            }
+
             var hw = await HardwareService.Instance.GetHardwareInfoAsync();
             Hardware = hw;
             IsConnected = true;
@@ -121,6 +128,7 @@ public partial class DashboardViewModel : ObservableObject
         {
             StatusMessage = $"Connection failed: {ex.Message}";
             IsConnected = false;
+            Pm3ProcessService.Instance.StopInteractiveSession();
         }
         finally
         {

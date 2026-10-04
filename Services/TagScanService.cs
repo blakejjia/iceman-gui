@@ -24,52 +24,59 @@ public class TagScanService
     public async Task<TagInfo> ProgressiveScanAsync(CancellationToken ct = default)
     {
         var proc = Pm3ProcessService.Instance;
-        // Step 1: Universal fast sweep across all standards (LF & HF)
-        string output = await proc.ExecuteCommandAsync("auto", ct, 45000);
-        var tag = ParseTagOutput(output);
-        if (!string.IsNullOrEmpty(tag.Uid) || !string.IsNullOrEmpty(tag.CardNumber))
-        {
-            return tag;
-        }
 
-        // Step 2: Fallback to deep progressive search if auto did not detect a tag
-        string deepOutput = await proc.ExecuteCommandAsync("hf search; lf search", ct, 60000);
-        var deepTag = ParseTagOutput(deepOutput);
-        return deepTag;
-    }
-
-    public async Task<bool> FastProbePresenceAsync(CancellationToken ct = default)
-    {
-        var proc = Pm3ProcessService.Instance;
-        // Lightning-fast HF 14a probe (~180ms)
+        // Tier 1: Lightning Fast Path for ISO 14443-A (Mifare Classic, Ultralight, NTAG, etc. ~90% of smart cards)
+        // Under persistent interactive session, this completes in ~150 - 350 ms!
         try
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(3000);
-            string hfProbe = await proc.ExecuteCommandAsync("hf 14a reader", cts.Token, 3000);
-            if (hfProbe.Contains("UID:", StringComparison.OrdinalIgnoreCase))
+            string hf14aOutput = await proc.ExecuteCommandAsync("hf 14a info", ct, 5000);
+            var tag14a = ParseTagOutput(hf14aOutput);
+            if (!string.IsNullOrEmpty(tag14a.Uid))
             {
-                return true;
+                return tag14a;
             }
         }
+        catch (OperationCanceledException) { throw; }
         catch { }
 
-        // Fast LF probe (~250ms when tag present)
+        // Tier 2: HF search across all other high-frequency standards (ISO 15693 / iCode, ISO 14443-B, FeliCa, iCLASS, Legic)
         try
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(3500);
-            string lfProbe = await proc.ExecuteCommandAsync("lf search", cts.Token, 3500);
-            if (lfProbe.Contains("TAG ID:", StringComparison.OrdinalIgnoreCase) ||
-                lfProbe.Contains("EM 410x ID:", StringComparison.OrdinalIgnoreCase) ||
-                lfProbe.Contains("Valid", StringComparison.OrdinalIgnoreCase))
+            string hfSearchOutput = await proc.ExecuteCommandAsync("hf search", ct, 8000);
+            var tagHf = ParseTagOutput(hfSearchOutput);
+            if (!string.IsNullOrEmpty(tagHf.Uid))
             {
-                return true;
+                return tagHf;
             }
         }
+        catch (OperationCanceledException) { throw; }
         catch { }
 
-        return false;
+        // Tier 3: LF search for common 125 kHz RFID tags (EM410x, HID Prox, Indala, AWID, IoProx, T55xx)
+        try
+        {
+            string lfSearchOutput = await proc.ExecuteCommandAsync("lf search", ct, 10000);
+            var tagLf = ParseTagOutput(lfSearchOutput);
+            if (!string.IsNullOrEmpty(tagLf.Uid) || !string.IsNullOrEmpty(tagLf.CardNumber))
+            {
+                return tagLf;
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch { }
+
+        // Tier 4: Comprehensive universal auto sweep fallback for exotic or weak modulation tags
+        try
+        {
+            string autoOutput = await proc.ExecuteCommandAsync("auto", ct, 25000);
+            var tagAuto = ParseTagOutput(autoOutput);
+            return tagAuto;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch
+        {
+            return new TagInfo();
+        }
     }
 
     public TagInfo ParseTagOutput(string rawOutput)

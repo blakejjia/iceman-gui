@@ -54,3 +54,19 @@ hw tune
 hf 14a reader
 hf mf chk --1k
 hw version
+auto -h
+hf search -h
+lf search -h
+hf 14a reader -h
+hw status
+auto -h
+quit
+rem TEST_MARKER
+quit
+auto -h
+rem CMD_DONE_123
+quit
+hf 14a info -h
+foo_invalid_cmd
+rem CMD_DONE_456
+quit

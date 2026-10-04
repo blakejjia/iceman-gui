@@ -136,6 +136,9 @@ public partial class FlasherViewModel : ObservableObject
 
         try
         {
+            // Release COM port so flasher can access it
+            Pm3ProcessService.Instance.StopInteractiveSession();
+
             // Flash with bootloader unlock always enabled
             string result = await FlasherService.Instance.FlashDeviceAsync(port, flashBootloader: true);
             FlashLog += result;

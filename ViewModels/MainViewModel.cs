@@ -112,6 +112,7 @@ public partial class MainViewModel : ObservableObject
         };
 
         TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
+        MifareToolkit.RequestNavigation += tag => SelectedPageTag = tag;
     }
 
     [RelayCommand]

@@ -69,16 +69,6 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
-                <!-- Mifare Toolkit (Visible once a Mifare tag is discovered) -->
-                <ui:NavigationViewItem x:Name="NavMifare"
-                                       Content="Mifare Toolkit"
-                                       Tag="mifare"
-                                       Click="OnNavClick"
-                                       Visibility="{Binding IsMifareDetected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Symbol="ContactCard24" />
-                    </ui:NavigationViewItem.Icon>
-                </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
 
             <!-- Footer: Native CMD Terminal launch -->

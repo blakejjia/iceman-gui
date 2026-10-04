@@ -15,6 +15,11 @@ public partial class MifareToolkitViewModel : ObservableObject
     [ObservableProperty]
     private MifareCardData _cardData = MifareCardData.CreateEmpty1K();
 
+    public event Action<string>? RequestNavigation;
+
+    [RelayCommand]
+    public void BackToScanner() => RequestNavigation?.Invoke("scanner");
+
     [ObservableProperty]
     private bool _isBusy;
 

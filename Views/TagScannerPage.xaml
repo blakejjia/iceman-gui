@@ -27,7 +27,6 @@
 
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <ui:Button Content="Scan Card" Appearance="Primary" Icon="{ui:SymbolIcon Scan24}" Command="{Binding ScanCardCommand}" Margin="0,0,16,0" />
-                            <ui:ToggleSwitch Content="Auto-Detect Card" IsChecked="{Binding IsAutoDetectEnabled}" VerticalAlignment="Center" Margin="0,0,16,0" />
                             <ui:Button Content="Clear Card" Appearance="Secondary" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding ClearCardCommand}" Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
 
@@ -38,9 +37,6 @@
                         </StackPanel>
                     </Grid>
                 </ui:Card>
-
-                <!-- Status Banner -->
-                <ui:InfoBar IsOpen="True" Severity="Informational" Message="{Binding StatusMessage}" IsClosable="False" Margin="0,0,0,20" />
 
                 <!-- Detected Tag Profile Card -->
                 <ui:Card Margin="0,0,0,20">
@@ -85,7 +81,19 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <ui:Button Grid.Column="1" VerticalAlignment="Center" Content="Copy UID" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopyUidCommand}" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="130">
+                                    <ui:Button Content="Copy UID" 
+                                               Icon="{ui:SymbolIcon Copy24}" 
+                                               Command="{Binding CopyUidCommand}" 
+                                               HorizontalAlignment="Stretch" 
+                                               Margin="0,0,0,6" />
+                                    <ui:Button Content="Write New UID" 
+                                               Appearance="Primary" 
+                                               Icon="{ui:SymbolIcon Edit24}" 
+                                               Command="{Binding OpenWriteUidDialogCommand}" 
+                                               Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                                               HorizontalAlignment="Stretch" />
+                                </StackPanel>
                             </Grid>
                         </Border>
 
@@ -267,5 +275,111 @@
                 </ItemsControl>
             </StackPanel>
         </ScrollViewer>
+
+        <!-- ============================================================== -->
+        <!-- VIEW 3: Write New UID Modal Dialog                             -->
+        <!-- ============================================================== -->
+        <Grid Background="#A0000000"
+              Visibility="{Binding IsWritingUidDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Panel.ZIndex="1000">
+            <ui:Card Width="460"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     Padding="24">
+                <StackPanel>
+                    <!-- Header -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Edit24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                            <ui:TextBlock Text="Write New UID" FontTypography="Subtitle" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ui:Button Icon="{ui:SymbolIcon Dismiss24}" Appearance="Transparent" HorizontalAlignment="Right" Command="{Binding CloseWriteUidDialogCommand}" Padding="6" />
+                    </Grid>
+
+                    <ui:TextBlock Text="Directly program block 0 on modifiable MIFARE cards (Gen 2 CUID or Gen 1a backdoor)."
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  TextWrapping="Wrap"
+                                  Margin="0,0,0,16" />
+
+                    <!-- Current UID -->
+                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="12,8" CornerRadius="6" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBlock Text="Current UID:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <ui:TextBlock Text="{Binding CurrentTag.FormattedUid}" FontFamily="Consolas" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- New UID Input with Random Button -->
+                    <ui:TextBlock Text="New UID (4 bytes / 8 hex characters):" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,6" />
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Text="{Binding WriteUidInput, UpdateSourceTrigger=PropertyChanged}"
+                                    FontFamily="Consolas"
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    MaxLength="8"
+                                    PlaceholderText="e.g. 11223344"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Random"
+                                   Icon="{ui:SymbolIcon Sparkle24}"
+                                   Command="{Binding GenerateRandomUidCommand}"
+                                   ToolTip="Generate random 4-byte UID" />
+                    </Grid>
+
+                    <!-- Magic Card Mode Selection -->
+                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
+                        <StackPanel>
+                            <ui:TextBlock Text="Card Generation Mode" FontTypography="BodyStrong" Margin="0,0,0,8" />
+                            <RadioButton Content="Gen 2 (CUID direct block 0 write — recommended for 99% of magic cards)"
+                                         IsChecked="{Binding IsGen2Cuid}"
+                                         Margin="0,0,0,6" />
+                            <RadioButton Content="Gen 1a (Chinese magic backdoor commands — 0x40 / 0x43 unlock)"
+                                         IsChecked="{Binding IsGen1a}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Status / Result Message -->
+                    <Border Margin="0,0,0,16"
+                            Padding="12,8"
+                            CornerRadius="6"
+                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            Visibility="{Binding HasWriteUidResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,8,0"
+                                             Visibility="{Binding IsWritingUid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <ui:TextBlock Text="{Binding WriteUidResult}"
+                                          TextWrapping="Wrap"
+                                          Foreground="{Binding WriteUidResultBrush}"
+                                          VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:Button Grid.Column="1"
+                                   Content="Cancel"
+                                   Appearance="Secondary"
+                                   Command="{Binding CloseWriteUidDialogCommand}"
+                                   Margin="0,0,8,0" />
+                        <ui:Button Grid.Column="2"
+                                   Content="Write UID"
+                                   Appearance="Primary"
+                                   Icon="{ui:SymbolIcon Checkmark24}"
+                                   Command="{Binding ExecuteWriteUidCommand}"
+                                   IsEnabled="{Binding IsNotWritingUid}" />
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+        </Grid>
     </Grid>
 </UserControl>

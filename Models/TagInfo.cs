@@ -31,7 +31,18 @@ public class TagInfo
     public bool HasAtsDetails => !string.IsNullOrEmpty(AtsDetails);
     public bool HasHistoricalBytes => !string.IsNullOrEmpty(HistoricalBytes);
 
-    public bool IsMifare => TagType.Contains("MIFARE", StringComparison.OrdinalIgnoreCase);
+    public bool IsMifare => TagType.Contains("MIFARE", StringComparison.OrdinalIgnoreCase) ||
+                            Standard.Contains("14443-A", StringComparison.OrdinalIgnoreCase);
     public bool IsGen2Cuid => MagicType.Contains("Gen 2", StringComparison.OrdinalIgnoreCase) || MagicType.Contains("CUID", StringComparison.OrdinalIgnoreCase);
     public bool IsGen1a => MagicType.Contains("Gen 1", StringComparison.OrdinalIgnoreCase);
+
+    public bool CanChangeUid => !string.IsNullOrEmpty(Uid) && (
+        IsMifare ||
+        IsGen1a ||
+        IsGen2Cuid ||
+        MagicType.Contains("Gen", StringComparison.OrdinalIgnoreCase) ||
+        MagicType.Contains("Magic", StringComparison.OrdinalIgnoreCase) ||
+        MagicType.Contains("CUID", StringComparison.OrdinalIgnoreCase) ||
+        MagicType.Contains("FUID", StringComparison.OrdinalIgnoreCase) ||
+        MagicType.Contains("UFUID", StringComparison.OrdinalIgnoreCase));
 }

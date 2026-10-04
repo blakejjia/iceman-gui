@@ -4,6 +4,9 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
+            <!-- Navigation Back Button -->
+            <ui:Button Content="Back to Tag Scanner" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToScannerCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
+
             <!-- Header -->
             <StackPanel Margin="0,0,0,20">
                 <ui:TextBlock Text="MIFARE Classic Toolkit" FontTypography="Title" />
