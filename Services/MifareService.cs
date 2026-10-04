@@ -60,12 +60,12 @@ public class MifareService
             var sector = card.Sectors[secNum];
             string key = sector.KeyA;
 
-            string cmd = $"hf mf rdbl --blk {b} -a -k {key}";
+            string cmd = $"hf mf rdbl --blk {b} -k {key}";
             string outBlock = await proc.ExecuteCommandAsync(cmd, ct, 8000);
             string clean = AnsiColorParser.StripAnsi(outBlock);
 
-            // [+]  data: 8B 12 31 BA 20 08 04 00 62 63 64 65 66 67 68 69
-            var dataMatch = Regex.Match(clean, @"data:\s*([0-9A-Fa-f\s]{32,})");
+            // [=]   0 | 8B 12 31 BA 12 08 04 00 62 63 64 65 66 67 68 69 | ..1.....bcdefghi
+            var dataMatch = Regex.Match(clean, @"\s*\d+\s+\|\s+([0-9A-Fa-f\s]{40,})\s+\|");
             if (dataMatch.Success)
             {
                 string rawHex = dataMatch.Groups[1].Value.Replace(" ", "").Trim().ToUpperInvariant();
@@ -92,11 +92,12 @@ public class MifareService
     public async Task<string> ReadSingleBlockAsync(int blockNum, string keyA, CancellationToken ct = default)
     {
         var proc = Pm3ProcessService.Instance;
-        string cmd = $"hf mf rdbl --blk {blockNum} -a -k {keyA}";
+        string cmd = $"hf mf rdbl --blk {blockNum} -k {keyA}";
         string outBlock = await proc.ExecuteCommandAsync(cmd, ct, 8000);
         string clean = AnsiColorParser.StripAnsi(outBlock);
 
-        var dataMatch = Regex.Match(clean, @"data:\s*([0-9A-Fa-f\s]{32,})");
+        // [=]   0 | 8B 12 31 BA 12 08 04 00 62 63 64 65 66 67 68 69 | ..1.....bcdefghi
+        var dataMatch = Regex.Match(clean, @"\s*\d+\s+\|\s+([0-9A-Fa-f\s]{40,})\s+\|");
         if (dataMatch.Success)
         {
             return dataMatch.Groups[1].Value.Replace(" ", "").Trim().ToUpperInvariant();
@@ -117,11 +118,12 @@ public class MifareService
             throw new ArgumentException("Data must be exactly 16 bytes (32 hex characters).");
         }
 
-        string cmd = $"hf mf wrbl --blk {blockNum} -a -k {keyA} -d {dataHex}";
+        string force = (blockNum == 0) ? "--force " : "";
+        string cmd = $"hf mf wrbl --blk {blockNum} {force}-k {keyA} -d {dataHex}";
         string output = await proc.ExecuteCommandAsync(cmd, ct, 10000);
         string clean = AnsiColorParser.StripAnsi(output);
 
-        return clean.Contains("isOk:01", StringComparison.OrdinalIgnoreCase) ||
+        return clean.Contains("Write ( ok )", StringComparison.OrdinalIgnoreCase) ||
                clean.Contains("Write block ok", StringComparison.OrdinalIgnoreCase) ||
                clean.Contains("success", StringComparison.OrdinalIgnoreCase);
     }
@@ -156,13 +158,13 @@ public class MifareService
             byte bcc = (byte)(b0 ^ b1 ^ b2 ^ b3);
 
             // Construct new block 0
-            // bytes 0..3: UID
-            // byte 4: BCC
-            // bytes 5..15: SAK, ATQA, and original manufacturer data from block 0
-            string restOfBlock0 = block0.Substring(10); // from byte 5 to 15 (22 hex chars)
+            // bytes 0..3: UID (8 hex chars)
+            // byte 4: BCC (2 hex chars)
+            // bytes 5..15: SAK, ATQA, and original manufacturer data (22 hex chars)
+            string restOfBlock0 = block0.Substring(10);
             string newBlock0 = $"{newUidHex}{bcc:X2}{restOfBlock0}";
 
-            // Write to block 0
+            // Write to block 0 with --force
             bool ok = await WriteBlockAsync(0, keyA, newBlock0, ct);
             if (!ok)
             {
@@ -173,7 +175,7 @@ public class MifareService
             string verifyBlock0 = await ReadSingleBlockAsync(0, keyA, ct);
             if (verifyBlock0.StartsWith(newUidHex, StringComparison.OrdinalIgnoreCase))
             {
-                return (true, $"Successfully changed UID to {newUidHex} and verified Block 0!");
+                return (true, $"Successfully changed UID to {newUidHex} and verified Block 0 ({verifyBlock0})!");
             }
             else
             {

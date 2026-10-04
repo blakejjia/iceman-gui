@@ -63,11 +63,13 @@ public class Pm3ProcessService
             StandardErrorEncoding = Encoding.UTF8
         };
 
-        // Inject runtime environment
+        // Inject runtime environment with proper trailing slashes for Qt
         string currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
         psi.EnvironmentVariables["PATH"] = $"{env.LibsDirectory};{env.ShellDirectory};{currentPath}";
-        psi.EnvironmentVariables["QT_PLUGIN_PATH"] = env.LibsDirectory;
-        psi.EnvironmentVariables["QT_QPA_PLATFORM_PLUGIN_PATH"] = env.LibsDirectory;
+        
+        string libsSlash = env.LibsDirectory.TrimEnd('\\') + "\\";
+        psi.EnvironmentVariables["QT_PLUGIN_PATH"] = libsSlash;
+        psi.EnvironmentVariables["QT_QPA_PLATFORM_PLUGIN_PATH"] = libsSlash;
         psi.EnvironmentVariables["HOME"] = env.ClientDirectory;
         psi.EnvironmentVariables["MSYSTEM"] = "MINGW64";
 
@@ -75,7 +77,7 @@ public class Pm3ProcessService
     }
 
     /// <summary>
-    /// Executes a single PM3 command (or multiple separated by ';') with timeout and cancellation.
+    /// Executes a single PM3 command with flush flag (-f) and wait flag (-w).
     /// </summary>
     public async Task<string> ExecuteCommandAsync(string command, CancellationToken ct = default, int timeoutMs = 60000)
     {
@@ -89,7 +91,7 @@ public class Pm3ProcessService
             if (!env.IsResolved) env.Resolve();
 
             string portArg = string.IsNullOrWhiteSpace(CurrentPort) ? "" : $"{CurrentPort} ";
-            string args = $"{portArg}-c \"{command}\"";
+            string args = $"{portArg}-f -w -c \"{command}\"";
 
             var psi = CreateBaseStartInfo(args);
             using var proc = new Process { StartInfo = psi };
