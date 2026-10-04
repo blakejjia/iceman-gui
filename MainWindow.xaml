@@ -4,12 +4,16 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:views="clr-namespace:iceman_gui.Views"
         xmlns:viewmodels="clr-namespace:iceman_gui.ViewModels"
-        Title="Proxmark3 Iceman Manager" 
+        Title="Proxmark3 Iceman Manager"
         Height="800" Width="1120"
         MinHeight="620" MinWidth="880"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -109,10 +113,25 @@
             <!-- Page Container Overlay -->
             <ui:NavigationView.ContentOverlay>
                 <Grid>
-                    <views:DashboardPage DataContext="{Binding Dashboard}" Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <views:TagScannerPage DataContext="{Binding TagScanner}" Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <views:FlasherPage DataContext="{Binding Flasher}" Visibility="{Binding IsFlasherActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <!-- Dashboard Page -->
+                    <Border Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:DashboardPage DataContext="{Binding Dashboard}" />
+                    </Border>
+
+                    <!-- Tag Scanner Page -->
+                    <Border Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:TagScannerPage DataContext="{Binding TagScanner}" />
+                    </Border>
+
+                    <!-- Mifare Toolkit Page -->
+                    <Border Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" />
+                    </Border>
+
+                    <!-- Firmware Flasher Page -->
+                    <Border Visibility="{Binding IsFlasherActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:FlasherPage DataContext="{Binding Flasher}" />
+                    </Border>
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>

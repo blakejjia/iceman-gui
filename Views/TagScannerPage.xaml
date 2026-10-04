@@ -35,7 +35,7 @@
             <ui:InfoBar IsOpen="True" Severity="Informational" Message="{Binding StatusMessage}" IsClosable="False" Margin="0,0,0,20" />
 
             <!-- MIFARE Classic Detected Banner & Quick Handoff -->
-            <ui:Card Margin="0,0,0,20" Visibility="{Binding CurrentTag.IsMifare, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ui:Card Margin="0,0,0,20" Visibility="{Binding IsMifareCardDetected, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

@@ -13,6 +13,13 @@ public partial class TagScannerViewModel : ObservableObject
     [ObservableProperty]
     private TagInfo? _currentTag;
 
+    public bool IsMifareCardDetected => CurrentTag != null && CurrentTag.IsMifare;
+
+    partial void OnCurrentTagChanged(TagInfo? value)
+    {
+        OnPropertyChanged(nameof(IsMifareCardDetected));
+    }
+
     [ObservableProperty]
     private bool _isScanning;
 
