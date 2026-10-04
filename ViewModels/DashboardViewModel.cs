@@ -30,10 +30,18 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private HardwareInfo _hardware = new();
 
+    public event Action<string>? RequestNavigation;
+
     public DashboardViewModel()
     {
         RefreshPorts();
     }
+
+    [RelayCommand]
+    public void GoToScanner() => RequestNavigation?.Invoke("scanner");
+
+    [RelayCommand]
+    public void GoToFlasher() => RequestNavigation?.Invoke("flasher");
 
     [RelayCommand]
     public void RefreshPorts()

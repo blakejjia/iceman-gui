@@ -22,6 +22,11 @@ public partial class TagScannerViewModel : ObservableObject
     [ObservableProperty]
     private string _lastSavedPath = string.Empty;
 
+    public event Action<string>? RequestNavigation;
+
+    [RelayCommand]
+    public void GoToMifare() => RequestNavigation?.Invoke("mifare");
+
     [RelayCommand]
     public async Task QuickScanAsync()
     {

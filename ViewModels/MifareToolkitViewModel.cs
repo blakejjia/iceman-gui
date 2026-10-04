@@ -48,6 +48,25 @@ public partial class MifareToolkitViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void EditBlock(MifareBlock? block)
+    {
+        if (block == null) return;
+        SelectedBlock = block;
+        EditBlockDataHex = block.DataHex;
+        StatusMessage = $"Selected Block {block.BlockNumber:D2} for editing. Modify hex data and click 'Write Block'.";
+    }
+
+    [RelayCommand]
+    public void CopyHex(string? hex)
+    {
+        if (!string.IsNullOrEmpty(hex))
+        {
+            Clipboard.SetText(hex);
+            StatusMessage = $"Copied hex to clipboard: {hex}";
+        }
+    }
+
+    [RelayCommand]
     public async Task CheckKeysAsync()
     {
         IsBusy = true;

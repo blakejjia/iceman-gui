@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iceman_gui.Core;
@@ -19,13 +22,29 @@ public partial class MainViewModel : ObservableObject
     private FlasherViewModel _flasher = new();
 
     [ObservableProperty]
-    private TerminalViewModel _terminal = new();
-
-    [ObservableProperty]
-    private string _activePort = "No Port";
+    private string _activePort = "Disconnected";
 
     [ObservableProperty]
     private bool _isConnected;
+
+    [ObservableProperty]
+    private bool _isMifareDetected;
+
+    [ObservableProperty]
+    private string _selectedPageTag = "dashboard";
+
+    public bool IsDashboardActive => SelectedPageTag == "dashboard";
+    public bool IsScannerActive => SelectedPageTag == "scanner";
+    public bool IsMifareActive => SelectedPageTag == "mifare";
+    public bool IsFlasherActive => SelectedPageTag == "flasher";
+
+    partial void OnSelectedPageTagChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsDashboardActive));
+        OnPropertyChanged(nameof(IsScannerActive));
+        OnPropertyChanged(nameof(IsMifareActive));
+        OnPropertyChanged(nameof(IsFlasherActive));
+    }
 
     public MainViewModel()
     {
@@ -33,13 +52,80 @@ public partial class MainViewModel : ObservableObject
         {
             if (e.PropertyName == nameof(Dashboard.SelectedPort))
             {
-                ActivePort = Dashboard.SelectedPort?.PortName ?? "No Port";
+                ActivePort = Dashboard.SelectedPort?.PortName ?? "Disconnected";
             }
             if (e.PropertyName == nameof(Dashboard.IsConnected))
             {
                 IsConnected = Dashboard.IsConnected;
+                if (!IsConnected)
+                {
+                    IsMifareDetected = false;
+                    SelectedPageTag = "dashboard";
+                }
+                else
+                {
+                    ActivePort = Dashboard.SelectedPort?.PortName ?? "Connected";
+                }
             }
         };
+
+        Dashboard.RequestNavigation += tag => SelectedPageTag = tag;
+
+        TagScanner.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TagScanner.CurrentTag))
+            {
+                var tag = TagScanner.CurrentTag;
+                if (tag != null && (tag.IsMifare || 
+                    tag.TagType.Contains("MIFARE", StringComparison.OrdinalIgnoreCase) ||
+                    tag.TagType.Contains("ISO14443-A", StringComparison.OrdinalIgnoreCase)))
+                {
+                    IsMifareDetected = true;
+                    // Also seed MifareToolkit with this card's UID
+                    if (!string.IsNullOrEmpty(tag.Uid))
+                    {
+                        MifareToolkit.CardData.Uid = tag.Uid;
+                    }
+                }
+            }
+        };
+
+        TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
+    }
+
+    [RelayCommand]
+    public void NavigateTo(string tag)
+    {
+        SelectedPageTag = tag;
+    }
+
+    [RelayCommand]
+    public void OpenExternalTerminal()
+    {
+        try
+        {
+            var env = Pm3EnvironmentResolver.Instance;
+            if (!env.IsResolved) env.Resolve();
+
+            string port = Dashboard.SelectedPort?.PortName ?? "COM9";
+            string rootDir = env.RootDirectory;
+
+            // Spawn native CMD running pm3.bat directly with hardware
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/k \"cd /d \"{rootDir}\" && call pm3.bat {port}\"",
+                WorkingDirectory = rootDir,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            };
+
+            Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Could not launch external terminal: {ex.Message}", "Terminal Launch Error");
+        }
     }
 
     [RelayCommand]

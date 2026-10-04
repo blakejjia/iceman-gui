@@ -5,8 +5,8 @@
         xmlns:views="clr-namespace:iceman_gui.Views"
         xmlns:viewmodels="clr-namespace:iceman_gui.ViewModels"
         Title="Proxmark3 Iceman Manager" 
-        Height="780" Width="1100"
-        MinHeight="600" MinWidth="850"
+        Height="800" Width="1120"
+        MinHeight="620" MinWidth="880"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowStartupLocation="CenterScreen">
@@ -21,88 +21,101 @@
         <!-- Modern Fluent TitleBar -->
         <ui:TitleBar Grid.Row="0" Title="Proxmark3 Iceman Manager" ShowMaximize="True" ShowMinimize="True" ShowClose="True" />
 
-        <!-- Main Body: Navigation Sidebar + Tab Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!-- Main Body: Fluent Navigation Rail + Dynamic Pages -->
+        <ui:NavigationView Grid.Row="1"
+                           x:Name="RootNavigation"
+                           PaneDisplayMode="Left"
+                           IsBackButtonVisible="Collapsed"
+                           IsPaneToggleVisible="True"
+                           CompactPaneLength="54"
+                           OpenPaneLength="210"
+                           IsPaneOpen="True">
 
-            <!-- Navigation Sidebar -->
-            <Border Grid.Column="0" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <!-- Nav Header -->
+            <ui:NavigationView.PaneHeader>
+                <StackPanel Margin="14,12,14,14">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="BroadActivityFeed24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                        <ui:TextBlock Text="PM3 Iceman" FontTypography="Subtitle" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ui:TextBlock Text="Portable Client GUI" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="28,2,0,0" />
+                </StackPanel>
+            </ui:NavigationView.PaneHeader>
+
+            <!-- Progressive Disclosure Menu Items -->
+            <ui:NavigationView.MenuItems>
+                <!-- Dashboard (Always visible) -->
+                <ui:NavigationViewItem x:Name="NavDashboard"
+                                       Content="Dashboard"
+                                       Tag="dashboard"
+                                       Click="OnNavClick">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Home24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Tag Scanner (Visible once machine is connected) -->
+                <ui:NavigationViewItem x:Name="NavScanner"
+                                       Content="Tag Scanner"
+                                       Tag="scanner"
+                                       Click="OnNavClick"
+                                       Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Search24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Mifare Toolkit (Visible once a Mifare tag is discovered) -->
+                <ui:NavigationViewItem x:Name="NavMifare"
+                                       Content="Mifare Toolkit"
+                                       Tag="mifare"
+                                       Click="OnNavClick"
+                                       Visibility="{Binding IsMifareDetected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="ContactCard24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Firmware Flasher (Visible once connected) -->
+                <ui:NavigationViewItem x:Name="NavFlasher"
+                                       Content="Firmware Flasher"
+                                       Tag="flasher"
+                                       Click="OnNavClick"
+                                       Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Flash24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.MenuItems>
+
+            <!-- Footer: Native CMD Terminal launch & Port Info -->
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Open PM3 Terminal"
+                                       Icon="{ui:SymbolIcon WindowConsole20}"
+                                       Command="{Binding OpenExternalTerminalCommand}"
+                                       ToolTip="Launch native unbuffered CMD running pm3.bat directly"
+                                       Tag="terminal" />
+            </ui:NavigationView.FooterMenuItems>
+
+            <ui:NavigationView.PaneFooter>
+                <Border Margin="10,6" Padding="10,6" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="6">
+                    <StackPanel>
+                        <ui:TextBlock Text="Connected Port:" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <ui:TextBlock Text="{Binding ActivePort, FallbackValue='COM9'}" FontWeight="Bold" Foreground="LimeGreen" FontFamily="Consolas" FontSize="11" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Border>
+            </ui:NavigationView.PaneFooter>
+
+            <!-- Page Container Overlay -->
+            <ui:NavigationView.ContentOverlay>
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!-- App Logo / Header -->
-                    <StackPanel Grid.Row="0" Margin="16,16,16,20">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="BroadActivityFeed24" FontSize="24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
-                            <ui:TextBlock Text="PM3 Iceman" FontTypography="Subtitle" />
-                        </StackPanel>
-                        <ui:TextBlock Text="Portable Client GUI" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="32,4,0,0" />
-                    </StackPanel>
-
-                    <!-- Nav Buttons -->
-                    <StackPanel Grid.Row="1" Margin="8,0">
-                        <RadioButton x:Name="NavDashboard" IsChecked="True" Style="{DynamicResource DefaultRadioButtonStyle}" GroupName="NavGroup" Margin="0,3" Padding="12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Home24" FontSize="18" Margin="0,0,12,0" />
-                                <ui:TextBlock Text="Dashboard" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-
-                        <RadioButton x:Name="NavScanner" Style="{DynamicResource DefaultRadioButtonStyle}" GroupName="NavGroup" Margin="0,3" Padding="12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Search24" FontSize="18" Margin="0,0,12,0" />
-                                <ui:TextBlock Text="Tag Scanner" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-
-                        <RadioButton x:Name="NavMifare" Style="{DynamicResource DefaultRadioButtonStyle}" GroupName="NavGroup" Margin="0,3" Padding="12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="ContactCard24" FontSize="18" Margin="0,0,12,0" />
-                                <ui:TextBlock Text="Mifare Toolkit" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-
-                        <RadioButton x:Name="NavFlasher" Style="{DynamicResource DefaultRadioButtonStyle}" GroupName="NavGroup" Margin="0,3" Padding="12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Flash24" FontSize="18" Margin="0,0,12,0" />
-                                <ui:TextBlock Text="Firmware Flasher" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-
-                        <RadioButton x:Name="NavTerminal" Style="{DynamicResource DefaultRadioButtonStyle}" GroupName="NavGroup" Margin="0,3" Padding="12,10">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="WindowConsole20" FontSize="18" Margin="0,0,12,0" />
-                                <ui:TextBlock Text="Interactive Terminal" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                    </StackPanel>
-
-                    <!-- Bottom Nav Info -->
-                    <Border Grid.Row="2" Margin="12,8" Padding="10" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="6">
-                        <StackPanel>
-                            <ui:TextBlock Text="Target Device:" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,4" />
-                            <ui:TextBlock Text="{Binding ActivePort, FallbackValue='COM9'}" FontWeight="Bold" Foreground="LimeGreen" FontFamily="Consolas" />
-                        </StackPanel>
-                    </Border>
+                    <views:DashboardPage DataContext="{Binding Dashboard}" Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <views:TagScannerPage DataContext="{Binding TagScanner}" Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <views:FlasherPage DataContext="{Binding Flasher}" Visibility="{Binding IsFlasherActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </Grid>
-            </Border>
-
-            <!-- Page Content Container -->
-            <Grid Grid.Column="1">
-                <views:DashboardPage DataContext="{Binding Dashboard}" Visibility="{Binding IsChecked, ElementName=NavDashboard, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <views:TagScannerPage DataContext="{Binding TagScanner}" Visibility="{Binding IsChecked, ElementName=NavScanner, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" Visibility="{Binding IsChecked, ElementName=NavMifare, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <views:FlasherPage DataContext="{Binding Flasher}" Visibility="{Binding IsChecked, ElementName=NavFlasher, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <views:TerminalPage DataContext="{Binding Terminal}" Visibility="{Binding IsChecked, ElementName=NavTerminal, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            </Grid>
-        </Grid>
+            </ui:NavigationView.ContentOverlay>
+        </ui:NavigationView>
 
         <!-- Global Status Bar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="16,8">

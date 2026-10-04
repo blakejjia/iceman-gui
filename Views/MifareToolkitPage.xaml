@@ -81,56 +81,118 @@
                 </StackPanel>
             </ui:Card>
 
-            <!-- 16 Sectors Data Viewer -->
-            <ui:Card>
-                <StackPanel>
-                    <ui:TextBlock Text="Sectors &amp; Blocks Matrix (MIFARE Classic 1K)" FontTypography="Subtitle" Margin="0,0,0,12" />
+            <!-- 16 Sectors Data Viewer (Pure Fluent UI) -->
+            <StackPanel Margin="0,0,0,20">
+                <Grid Margin="0,0,0,12">
+                    <ui:TextBlock Text="Sectors &amp; Blocks Matrix (MIFARE Classic 1K)" FontTypography="Subtitle" VerticalAlignment="Center" />
+                    <ui:TextBlock Text="64 Blocks Total (16 Sectors x 4 Blocks)" HorizontalAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" FontSize="12" />
+                </Grid>
 
-                    <ItemsControl ItemsSource="{Binding CardData.Sectors}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,8">
-                                    <StackPanel>
-                                        <Grid Margin="0,0,0,8">
-                                            <ui:TextBlock Text="{Binding SectorNumber, StringFormat='{}Sector {0}'}" FontWeight="Bold" FontSize="14" />
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <ui:TextBlock Text="{Binding KeyA, StringFormat='{}Key A: {0}'}" FontFamily="Consolas" Foreground="LimeGreen" Margin="0,0,16,0" />
-                                                <ui:TextBlock Text="{Binding AccessBits, StringFormat='{}Access: {0}'}" FontFamily="Consolas" Foreground="Goldenrod" Margin="0,0,16,0" />
-                                                <ui:TextBlock Text="{Binding KeyB, StringFormat='{}Key B: {0}'}" FontFamily="Consolas" Foreground="DeepSkyBlue" />
-                                            </StackPanel>
-                                        </Grid>
+                <ItemsControl ItemsSource="{Binding CardData.Sectors}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:CardExpander IsExpanded="True" Margin="0,0,0,8">
+                                <ui:CardExpander.Header>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                        <!-- Blocks list -->
-                                        <ListView ItemsSource="{Binding Blocks}" 
-                                                  SelectedItem="{Binding DataContext.SelectedBlock, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                  BorderThickness="0">
-                                            <ListView.View>
-                                                <GridView>
-                                                    <GridViewColumn Header="Blk" Width="50" DisplayMemberBinding="{Binding BlockNumber}" />
-                                                    <GridViewColumn Header="Data (Hex)" Width="380">
-                                                        <GridViewColumn.CellTemplate>
-                                                            <DataTemplate>
-                                                                <ui:TextBlock Text="{Binding DataHex}" FontFamily="Consolas" />
-                                                            </DataTemplate>
-                                                        </GridViewColumn.CellTemplate>
-                                                    </GridViewColumn>
-                                                    <GridViewColumn Header="ASCII" Width="180">
-                                                        <GridViewColumn.CellTemplate>
-                                                            <DataTemplate>
-                                                                <ui:TextBlock Text="{Binding DataAscii}" FontFamily="Consolas" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                                            </DataTemplate>
-                                                        </GridViewColumn.CellTemplate>
-                                                    </GridViewColumn>
-                                                </GridView>
-                                            </ListView.View>
-                                        </ListView>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ui:Card>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ui:TextBlock Text="{Binding Title}" FontTypography="BodyStrong" FontSize="14" Margin="0,0,10,0" />
+                                            <Border Background="#064E3B" CornerRadius="4" Padding="6,2" Visibility="{Binding SectorNumber, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <!-- If sector == 0 -->
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Sector Keys & Access Bits Pills -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <!-- Key A Pill -->
+                                            <Border Background="#0F2F1D" BorderBrush="#22C55E" BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Key20" FontSize="14" Foreground="#22C55E" Margin="0,0,4,0" />
+                                                    <ui:TextBlock Text="{Binding KeyA, StringFormat='{}Key A: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="#4ADE80" FontWeight="SemiBold" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Access Bits Pill -->
+                                            <Border Background="#2B2105" BorderBrush="#EAB308" BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="LockClosed20" FontSize="14" Foreground="#EAB308" Margin="0,0,4,0" />
+                                                    <ui:TextBlock Text="{Binding AccessBits, StringFormat='{}Access: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="#FACC15" FontWeight="SemiBold" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Key B Pill -->
+                                            <Border Background="#0C2340" BorderBrush="#3B82F6" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Key20" FontSize="14" Foreground="#3B82F6" Margin="0,0,4,0" />
+                                                    <ui:TextBlock Text="{Binding KeyB, StringFormat='{}Key B: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="#60A5FA" FontWeight="SemiBold" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </ui:CardExpander.Header>
+
+                                <!-- Pure Fluent UI Blocks List inside Expander -->
+                                <ItemsControl ItemsSource="{Binding Blocks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,2" Padding="8,6" CornerRadius="6" Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="65" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Block Number Badge -->
+                                                    <Border Grid.Column="0" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <ui:TextBlock Text="{Binding BlockNumber, StringFormat='{}Blk {0:D2}'}" FontFamily="Consolas" FontWeight="SemiBold" FontSize="11" />
+                                                    </Border>
+
+                                                    <!-- Block Type Indicator Tags -->
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                                                        <Border Background="#064E3B" CornerRadius="4" Padding="6,2" Margin="0,0,4,0" Visibility="{Binding IsBlockZero, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <ui:TextBlock Text="UID" Foreground="#34D399" FontSize="10" FontWeight="Bold" />
+                                                        </Border>
+                                                        <Border Background="#1E3A8A" CornerRadius="4" Padding="6,2" Visibility="{Binding IsSectorTrailer, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <ui:TextBlock Text="Trailer" Foreground="#93C5FD" FontSize="10" FontWeight="Bold" />
+                                                        </Border>
+                                                    </StackPanel>
+
+                                                    <!-- Hex Data in dark monospaced pill -->
+                                                    <Border Grid.Column="2" Margin="6,0" Background="#141416" CornerRadius="4" Padding="10,4" VerticalAlignment="Center">
+                                                        <ui:TextBlock Text="{Binding FormattedHex}" FontFamily="Consolas" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center" />
+                                                    </Border>
+
+                                                    <!-- ASCII Preview in dark pill -->
+                                                    <Border Grid.Column="3" Margin="0,0,6,0" Background="#141416" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                                                        <ui:TextBlock Text="{Binding DataAscii}" FontFamily="Consolas" FontSize="12" Foreground="#A1A1AA" VerticalAlignment="Center" />
+                                                    </Border>
+
+                                                    <!-- Edit & Copy Buttons -->
+                                                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <ui:Button Content="Edit" Icon="{ui:SymbolIcon Edit16}" Padding="8,4" FontSize="11" 
+                                                                   Command="{Binding DataContext.EditBlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                   CommandParameter="{Binding}" Margin="0,0,4,0" />
+                                                        <ui:Button Icon="{ui:SymbolIcon Copy16}" ToolTip="Copy 32-hex data" Padding="8,4" FontSize="11" 
+                                                                   Command="{Binding DataContext.CopyHexCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                   CommandParameter="{Binding DataHex}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ui:CardExpander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

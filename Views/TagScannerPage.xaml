@@ -34,6 +34,24 @@
             <!-- Status Banner -->
             <ui:InfoBar IsOpen="True" Severity="Informational" Message="{Binding StatusMessage}" IsClosable="False" Margin="0,0,0,20" />
 
+            <!-- MIFARE Classic Detected Banner & Quick Handoff -->
+            <ui:Card Margin="0,0,0,20" Visibility="{Binding CurrentTag.IsMifare, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <ui:SymbolIcon Symbol="Key24" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                            <ui:TextBlock Text="MIFARE Classic Toolkit Unlocked" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <ui:TextBlock Text="This card is compatible with key recovery, block reading, UID cloning, and data dumping." Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                    </StackPanel>
+                    <ui:Button Grid.Column="1" VerticalAlignment="Center" Content="Open Mifare Toolkit" Appearance="Primary" Icon="{ui:SymbolIcon ArrowRight24}" Command="{Binding GoToMifareCommand}" />
+                </Grid>
+            </ui:Card>
+
             <!-- Detected Tag Profile Card -->
             <ui:Card Margin="0,0,0,20">
                 <StackPanel>

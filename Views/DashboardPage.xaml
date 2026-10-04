@@ -40,6 +40,75 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- Connected Actions Card (Visible when Proxmark3 is connected) -->
+            <ui:Card Margin="0,0,0,20" Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <ui:SymbolIcon Symbol="Rocket24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                        <ui:TextBlock Text="Hardware Actions" FontTypography="Subtitle" />
+                    </StackPanel>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Action 1: Tag Scanner -->
+                        <Border Grid.Column="0" Margin="0,0,8,0" Padding="14" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <ui:SymbolIcon Symbol="Search24" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                                    <ui:TextBlock Text="Tag Scanner" FontTypography="BodyStrong" />
+                                </StackPanel>
+                                <ui:TextBlock Grid.Row="1" Text="Scan LF/HF RFID tags, extract UID, and unlock Mifare Toolkit." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12" FontSize="12" />
+                                <ui:Button Grid.Row="2" Content="Go to Scanner" Appearance="Primary" Icon="{ui:SymbolIcon ArrowRight24}" Command="{Binding GoToScannerCommand}" HorizontalAlignment="Stretch" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Action 2: Flasher -->
+                        <Border Grid.Column="1" Margin="4,0,4,0" Padding="14" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <ui:SymbolIcon Symbol="Flash24" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                                    <ui:TextBlock Text="Firmware Flasher" FontTypography="BodyStrong" />
+                                </StackPanel>
+                                <ui:TextBlock Grid.Row="1" Text="Verify and safely re-flash ARM bootrom and FPGA/OS fullimage." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12" FontSize="12" />
+                                <ui:Button Grid.Row="2" Content="Open Flasher" Icon="{ui:SymbolIcon ArrowRight24}" Command="{Binding GoToFlasherCommand}" HorizontalAlignment="Stretch" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Action 3: External Terminal -->
+                        <Border Grid.Column="2" Margin="8,0,0,0" Padding="14" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <ui:SymbolIcon Symbol="WindowConsole20" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                                    <ui:TextBlock Text="PM3 Terminal" FontTypography="BodyStrong" />
+                                </StackPanel>
+                                <ui:TextBlock Grid.Row="1" Text="Spawn native unrecorded CMD directly running pm3.bat." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12" FontSize="12" />
+                                <ui:Button Grid.Row="2" Content="Launch CMD" Icon="{ui:SymbolIcon Open24}" Command="{Binding DataContext.OpenExternalTerminalCommand, RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Stretch" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
             <!-- Hardware Details Card -->
             <ui:Card Margin="0,0,0,20">
                 <StackPanel>

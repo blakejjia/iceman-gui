@@ -12,6 +12,23 @@ public class MifareBlock
     public string DataHex { get; set; } = new string('0', 32);
     public string DataAscii { get; set; } = string.Empty;
     public bool IsSectorTrailer { get; set; }
+    public bool IsBlockZero => BlockNumber == 0;
+
+    public string FormattedHex
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(DataHex) || DataHex.Length < 2) return DataHex;
+            var sb = new StringBuilder();
+            for (int i = 0; i < DataHex.Length; i += 2)
+            {
+                if (i > 0) sb.Append(' ');
+                int len = Math.Min(2, DataHex.Length - i);
+                sb.Append(DataHex.Substring(i, len));
+            }
+            return sb.ToString();
+        }
+    }
 
     public static string HexToAscii(string hex)
     {
@@ -35,6 +52,7 @@ public class MifareBlock
 public class MifareSector
 {
     public int SectorNumber { get; set; }
+    public string Title => $"Sector {SectorNumber:D2}";
     public string KeyA { get; set; } = "FFFFFFFFFFFF";
     public string KeyB { get; set; } = "FFFFFFFFFFFF";
     public string AccessBits { get; set; } = "FF078069";
