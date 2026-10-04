@@ -40,8 +40,6 @@
                 </Grid>
             </ui:Card>
 
-            <ui:InfoBar IsOpen="True" Severity="Informational" Message="{Binding StatusMessage}" IsClosable="False" Margin="0,0,0,20" />
-
             <!-- Modify UID & Magic Card Writing Card -->
             <ui:Card Margin="0,0,0,20">
                 <StackPanel>

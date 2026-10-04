@@ -156,7 +156,7 @@
 
                             <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
                                 <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding CurrentTag.MagicType, FallbackValue='Standard (Non-Magic)'}" FontTypography="BodyStrong" Foreground="LimeGreen" />
+                                <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}" FontTypography="BodyStrong" Foreground="LimeGreen" />
                             </StackPanel>
 
                             <!-- Row 3: ATS & Historical Bytes (High-Security / ISO-DEP Cards) -->
@@ -279,13 +279,20 @@
         <!-- ============================================================== -->
         <!-- VIEW 3: Write New UID Modal Dialog                             -->
         <!-- ============================================================== -->
-        <Grid Background="#A0000000"
+        <Grid Background="#B0000000"
               Visibility="{Binding IsWritingUidDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}"
               Panel.ZIndex="1000">
-            <ui:Card Width="460"
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Center"
-                     Padding="24">
+            <Border Width="480"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#1E1E22"
+                    BorderBrush="#38383E"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="32" ShadowDepth="8" Direction="270" Opacity="0.75" Color="#000000" />
+                </Border.Effect>
                 <StackPanel>
                     <!-- Header -->
                     <Grid Margin="0,0,0,16">
@@ -296,17 +303,34 @@
                         <ui:Button Icon="{ui:SymbolIcon Dismiss24}" Appearance="Transparent" HorizontalAlignment="Right" Command="{Binding CloseWriteUidDialogCommand}" Padding="6" />
                     </Grid>
 
-                    <ui:TextBlock Text="Directly program block 0 on modifiable MIFARE cards (Gen 2 CUID or Gen 1a backdoor)."
+                    <ui:TextBlock Text="Directly program block 0 on modifiable MIFARE cards using auto-detected capabilities."
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                   TextWrapping="Wrap"
                                   Margin="0,0,0,16" />
 
                     <!-- Current UID -->
-                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="12,8" CornerRadius="6" Margin="0,0,0,16">
+                    <Border Background="#28282E" BorderBrush="#38383E" BorderThickness="1" Padding="12,8" CornerRadius="6" Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock Text="Current UID:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <ui:TextBlock Text="{Binding CurrentTag.FormattedUid}" FontFamily="Consolas" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
                         </StackPanel>
+                    </Border>
+
+                    <!-- Auto-Detected Magic Capabilities Mode -->
+                    <Border Background="#28282E" BorderBrush="#38383E" BorderThickness="1" Padding="14,10" CornerRadius="6" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <ui:TextBlock Text="Detected Magic Mode" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding DetectedMagicModeText}" FontTypography="BodyStrong" Foreground="#38BDF8" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#064E3B" CornerRadius="4" Padding="8,4">
+                                <ui:TextBlock Text="Auto-Selected" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" />
+                            </Border>
+                        </Grid>
                     </Border>
 
                     <!-- New UID Input with Random Button -->
@@ -331,23 +355,13 @@
                                    ToolTip="Generate random 4-byte UID" />
                     </Grid>
 
-                    <!-- Magic Card Mode Selection -->
-                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="12" CornerRadius="6" Margin="0,0,0,16">
-                        <StackPanel>
-                            <ui:TextBlock Text="Card Generation Mode" FontTypography="BodyStrong" Margin="0,0,0,8" />
-                            <RadioButton Content="Gen 2 (CUID direct block 0 write — recommended for 99% of magic cards)"
-                                         IsChecked="{Binding IsGen2Cuid}"
-                                         Margin="0,0,0,6" />
-                            <RadioButton Content="Gen 1a (Chinese magic backdoor commands — 0x40 / 0x43 unlock)"
-                                         IsChecked="{Binding IsGen1a}" />
-                        </StackPanel>
-                    </Border>
-
                     <!-- Status / Result Message -->
                     <Border Margin="0,0,0,16"
                             Padding="12,8"
                             CornerRadius="6"
-                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            Background="#28282E"
+                            BorderBrush="#38383E"
+                            BorderThickness="1"
                             Visibility="{Binding HasWriteUidResult, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,8,0"
@@ -379,7 +393,7 @@
                                    IsEnabled="{Binding IsNotWritingUid}" />
                     </Grid>
                 </StackPanel>
-            </ui:Card>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

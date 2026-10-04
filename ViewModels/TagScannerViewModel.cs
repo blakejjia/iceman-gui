@@ -25,11 +25,25 @@ public partial class TagScannerViewModel : ObservableObject
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
     public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
 
+    public string DetectedMagicModeText
+    {
+        get
+        {
+            if (CurrentTag == null) return "Unknown";
+            if (CurrentTag.IsGen1a) return "Gen 1a (Magic Backdoor Unlock)";
+            if (CurrentTag.IsGen2Cuid) return "Gen 2 / CUID (Direct Block 0 Write)";
+            return !string.IsNullOrWhiteSpace(CurrentTag.MagicType)
+                ? $"{CurrentTag.MagicType} (Direct Block 0 Write)"
+                : "Gen 2 / CUID (Direct Block 0 Write)";
+        }
+    }
+
     partial void OnCurrentTagChanged(TagInfo? value)
     {
         OnPropertyChanged(nameof(IsMifareCardDetected));
         OnPropertyChanged(nameof(HasCurrentTag));
         OnPropertyChanged(nameof(CanWriteUid));
+        OnPropertyChanged(nameof(DetectedMagicModeText));
     }
 
     [ObservableProperty]
@@ -37,30 +51,6 @@ public partial class TagScannerViewModel : ObservableObject
 
     [ObservableProperty]
     private string _writeUidInput = string.Empty;
-
-    [ObservableProperty]
-    private bool _isGen2Cuid = true;
-
-    [ObservableProperty]
-    private bool _isGen1a;
-
-    partial void OnIsGen2CuidChanged(bool value)
-    {
-        if (value && _isGen1a)
-        {
-            _isGen1a = false;
-            OnPropertyChanged(nameof(IsGen1a));
-        }
-    }
-
-    partial void OnIsGen1aChanged(bool value)
-    {
-        if (value && _isGen2Cuid)
-        {
-            _isGen2Cuid = false;
-            OnPropertyChanged(nameof(IsGen2Cuid));
-        }
-    }
 
     [ObservableProperty]
     private bool _isWritingUid;
@@ -187,20 +177,10 @@ public partial class TagScannerViewModel : ObservableObject
         if (CurrentTag == null || !CanWriteUid) return;
 
         WriteUidInput = CurrentTag.Uid;
-        if (CurrentTag.IsGen1a)
-        {
-            IsGen1a = true;
-            IsGen2Cuid = false;
-        }
-        else
-        {
-            IsGen2Cuid = true;
-            IsGen1a = false;
-        }
-
         WriteUidResult = string.Empty;
         HasWriteUidResult = false;
         IsWriteUidSuccess = false;
+        OnPropertyChanged(nameof(DetectedMagicModeText));
         IsWritingUidDialogOpen = true;
     }
 
@@ -233,15 +213,18 @@ public partial class TagScannerViewModel : ObservableObject
             return;
         }
 
+        bool isGen1a = CurrentTag.IsGen1a;
+        bool isGen2Cuid = !isGen1a;
+
         IsWritingUid = true;
-        WriteUidResult = $"Writing UID [{cleanHex}] via {(IsGen2Cuid ? "Gen 2 CUID direct write" : "Gen 1a magic backdoor")}...";
+        WriteUidResult = $"Writing UID [{cleanHex}] via {(isGen2Cuid ? "Gen 2 CUID direct write" : "Gen 1a magic backdoor")}...";
         HasWriteUidResult = true;
         IsWriteUidSuccess = false;
         OnPropertyChanged(nameof(WriteUidResultBrush));
 
         try
         {
-            var (success, message) = await MifareService.Instance.ChangeUidAsync(cleanHex, isGen2Cuid: IsGen2Cuid);
+            var (success, message) = await MifareService.Instance.ChangeUidAsync(cleanHex, isGen2Cuid: isGen2Cuid);
             WriteUidResult = message;
             IsWriteUidSuccess = success;
             OnPropertyChanged(nameof(WriteUidResultBrush));

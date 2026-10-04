@@ -33,17 +33,37 @@
                            IsBackButtonVisible="Collapsed"
                            IsPaneToggleVisible="True"
                            CompactPaneLength="54"
-                           OpenPaneLength="210"
+                           OpenPaneLength="280"
                            IsPaneOpen="True"
                            Transition="FadeInWithSlide"
                            TransitionDuration="220">
 
             <!-- Nav Header -->
             <ui:NavigationView.PaneHeader>
-                <StackPanel Margin="16,14,14,14">
-                    <ui:TextBlock Text="iceman-gui" FontTypography="TitleLarge" FontSize="20" FontWeight="SemiBold" />
-                    <ui:TextBlock Text="Proxmark3 Client" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,2,0,0" />
-                </StackPanel>
+                <Grid Margin="10,12,10,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Grid.Column="0"
+                           Source="assets/favicon.png"
+                           Width="28"
+                           Height="28"
+                           Margin="0,0,10,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <ui:TextBlock Text="iceman-gui"
+                                      FontSize="20"
+                                      FontWeight="SemiBold"
+                                      TextTrimming="None" />
+                        <ui:TextBlock Text="Proxmark3 Client"
+                                      FontSize="11"
+                                      Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                      Margin="0,2,0,0"
+                                      TextTrimming="None" />
+                    </StackPanel>
+                </Grid>
             </ui:NavigationView.PaneHeader>
 
             <!-- Progressive Disclosure Menu Items -->
