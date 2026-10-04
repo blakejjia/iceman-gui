@@ -1,8 +1,31 @@
 {
   "version": 2,
-  "dgSpecHash": "suCkDolDSu4=",
+  "dgSpecHash": "Lm5mzn9fGjo=",
   "success": true,
   "projectFilePath": "C:\\Users\\GRAPE\\coding\\iceman-gui\\iceman-gui.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\GRAPE\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.2\\communitytoolkit.mvvm.8.4.2.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.android-arm.runtime.native.system.io.ports\\10.0.12\\runtime.android-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.android-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.android-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.android-x64.runtime.native.system.io.ports\\10.0.12\\runtime.android-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.android-x86.runtime.native.system.io.ports\\10.0.12\\runtime.android-x86.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-arm.runtime.native.system.io.ports\\10.0.12\\runtime.linux-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-bionic-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-bionic-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-bionic-x64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-bionic-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-musl-arm.runtime.native.system.io.ports\\10.0.12\\runtime.linux-musl-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-musl-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-musl-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-musl-x64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-musl-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.linux-x64.runtime.native.system.io.ports\\10.0.12\\runtime.linux-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.maccatalyst-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.maccatalyst-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.maccatalyst-x64.runtime.native.system.io.ports\\10.0.12\\runtime.maccatalyst-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.native.system.io.ports\\10.0.12\\runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.osx-arm64.runtime.native.system.io.ports\\10.0.12\\runtime.osx-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\runtime.osx-x64.runtime.native.system.io.ports\\10.0.12\\runtime.osx-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\system.io.ports\\10.0.12\\system.io.ports.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\system.management\\10.0.12\\system.management.10.0.12.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\wpf-ui\\4.3.0\\wpf-ui.4.3.0.nupkg.sha512",
+    "C:\\Users\\GRAPE\\.nuget\\packages\\wpf-ui.abstractions\\4.3.0\\wpf-ui.abstractions.4.3.0.nupkg.sha512"
+  ],
   "logs": []
 }
