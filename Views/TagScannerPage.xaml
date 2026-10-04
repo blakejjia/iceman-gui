@@ -414,9 +414,10 @@
                                    Content="Cancel"
                                    Appearance="Secondary"
                                    Command="{Binding CloseWriteUidDialogCommand}"
+                                   Visibility="{Binding CanCancelWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}"
                                    Margin="0,0,8,0" />
                         <ui:Button Grid.Column="2"
-                                   Content="Write UID"
+                                   Content="{Binding WriteUidButtonText}"
                                    Appearance="Primary"
                                    Icon="{ui:SymbolIcon Checkmark24}"
                                    Command="{Binding ExecuteWriteUidCommand}"

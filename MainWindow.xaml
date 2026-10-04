@@ -33,34 +33,34 @@
                            IsBackButtonVisible="Collapsed"
                            IsPaneToggleVisible="True"
                            CompactPaneLength="54"
-                           OpenPaneLength="280"
+                           OpenPaneLength="220"
                            IsPaneOpen="True"
                            Transition="FadeInWithSlide"
                            TransitionDuration="220">
 
             <!-- Nav Header -->
             <ui:NavigationView.PaneHeader>
-                <Grid Margin="10,12,10,12">
+                <Grid Margin="8,10,8,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Image Grid.Column="0"
                            Source="assets/favicon.png"
-                           Width="28"
-                           Height="28"
-                           Margin="0,0,10,0"
+                           Width="26"
+                           Height="26"
+                           Margin="0,0,8,0"
                            RenderOptions.BitmapScalingMode="HighQuality"
                            VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <ui:TextBlock Text="iceman-gui"
-                                      FontSize="20"
+                                      FontSize="18"
                                       FontWeight="SemiBold"
                                       TextTrimming="None" />
                         <ui:TextBlock Text="Proxmark3 Client"
                                       FontSize="11"
                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                      Margin="0,2,0,0"
+                                      Margin="0,1,0,0"
                                       TextTrimming="None" />
                     </StackPanel>
                 </Grid>

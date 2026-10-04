@@ -75,11 +75,18 @@ public partial class TagScannerViewModel : ObservableObject
     [ObservableProperty]
     private bool _isWriteUidSuccess;
 
+    [ObservableProperty]
+    private string _writeUidButtonText = "Write UID";
+
+    public bool CanCancelWriteUid => !IsWriteUidSuccess;
+
     public Brush WriteUidResultBrush => IsWriteUidSuccess ? Brushes.LimeGreen : Brushes.LightCoral;
 
     partial void OnIsWriteUidSuccessChanged(bool value)
     {
         OnPropertyChanged(nameof(WriteUidResultBrush));
+        OnPropertyChanged(nameof(CanCancelWriteUid));
+        WriteUidButtonText = value ? "Finish" : "Write UID";
     }
 
     [ObservableProperty]
@@ -189,6 +196,7 @@ public partial class TagScannerViewModel : ObservableObject
         WriteUidResult = string.Empty;
         HasWriteUidResult = false;
         IsWriteUidSuccess = false;
+        WriteUidButtonText = "Write UID";
         OnPropertyChanged(nameof(DetectedMagicModeText));
         IsWritingUidDialogOpen = true;
     }
@@ -210,6 +218,12 @@ public partial class TagScannerViewModel : ObservableObject
     [RelayCommand]
     public async Task ExecuteWriteUidAsync()
     {
+        if (IsWriteUidSuccess)
+        {
+            CloseWriteUidDialog();
+            return;
+        }
+
         if (CurrentTag == null || !CanWriteUid) return;
 
         string cleanHex = WriteUidInput.Replace(" ", "").Replace(":", "").Trim().ToUpperInvariant();
