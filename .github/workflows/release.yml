@@ -6,6 +6,11 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        type: string
+        default: 'v1.0.0'
       draft:
         description: 'Create as draft release'
         required: false
@@ -35,6 +40,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
 
       - name: Restore Dependencies
         run: dotnet restore iceman-gui.csproj
@@ -62,6 +68,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: |
             iceman-gui-windows-x64.zip
             SHA256SUMS.txt

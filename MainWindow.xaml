@@ -5,6 +5,7 @@
         xmlns:views="clr-namespace:iceman_gui.Views"
         xmlns:viewmodels="clr-namespace:iceman_gui.ViewModels"
         Title="Proxmark3 Iceman Manager"
+        Icon="assets/favicon.png"
         Height="800" Width="1120"
         MinHeight="620" MinWidth="880"
         ExtendsContentIntoTitleBar="True"
@@ -23,7 +24,7 @@
         </Grid.RowDefinitions>
 
         <!-- Modern Fluent TitleBar -->
-        <ui:TitleBar Grid.Row="0" Title="Proxmark3 Iceman Manager" ShowMaximize="True" ShowMinimize="True" ShowClose="True" />
+        <ui:TitleBar Grid.Row="0" Title="Proxmark3 Iceman Manager" ShowMaximize="True" ShowMinimize="True" ShowClose="True" Icon="assets/favicon.png" />
 
         <!-- Main Body: Fluent Navigation Rail + Dynamic Pages -->
         <ui:NavigationView Grid.Row="1"
@@ -40,11 +41,11 @@
             <!-- Nav Header -->
             <ui:NavigationView.PaneHeader>
                 <StackPanel Margin="14,12,14,14">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="BroadActivityFeed24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="assets/favicon.png" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                         <ui:TextBlock Text="PM3 Iceman" FontTypography="Subtitle" VerticalAlignment="Center" />
                     </StackPanel>
-                    <ui:TextBlock Text="Portable Client GUI" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="28,2,0,0" />
+                    <ui:TextBlock Text="Portable Client GUI" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="32,2,0,0" />
                 </StackPanel>
             </ui:NavigationView.PaneHeader>
 

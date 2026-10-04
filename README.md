@@ -1,11 +1,15 @@
-# PM3 Iceman GUI
+<div align="center">
+  <img src="assets/logo_full.jpg" alt="PM3 Iceman GUI Logo" width="720" />
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%2010-0078D6.svg)](https://microsoft.com/windows)
-[![Proxmark3](https://img.shields.io/badge/Proxmark3-Iceman%2FRRG-success.svg)](https://github.com/RfidResearchGroup/proxmark3)
+  <br /><br />
 
-A modern, high-performance Windows 11 Fluent UI desktop client designed for the **Proxmark3 (Iceman / RfidResearchGroup)** distribution.
+  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+  [![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+  [![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%2010-0078D6.svg)](https://microsoft.com/windows)
+  [![Proxmark3](https://img.shields.io/badge/Proxmark3-Iceman%2FRRG-success.svg)](https://github.com/RfidResearchGroup/proxmark3)
+
+  <p><strong>A modern, high-performance Windows 11 Fluent UI desktop client designed for the Proxmark3 (Iceman / RfidResearchGroup) distribution.</strong></p>
+</div>
 
 `iceman-gui` simplifies everyday RFID and NFC workflows—device connection, hardware diagnostics, antenna tuning, tag identification, firmware flashing, and MIFARE Classic sector editing—while preserving raw command-line speed through an unbuffered one-click external terminal.
 
