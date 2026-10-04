@@ -79,20 +79,9 @@
                         <ui:SymbolIcon Symbol="ContactCard24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-
-                <!-- Firmware Flasher (Visible once connected) -->
-                <ui:NavigationViewItem x:Name="NavFlasher"
-                                       Content="Firmware Flasher"
-                                       Tag="flasher"
-                                       Click="OnNavClick"
-                                       Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Symbol="Flash24" />
-                    </ui:NavigationViewItem.Icon>
-                </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
 
-            <!-- Footer: Native CMD Terminal launch & Port Info -->
+            <!-- Footer: Native CMD Terminal launch -->
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="Open PM3 Terminal"
                                        Icon="{ui:SymbolIcon WindowConsole20}"
@@ -100,15 +89,6 @@
                                        ToolTip="Launch native unbuffered CMD running pm3.bat directly"
                                        Tag="terminal" />
             </ui:NavigationView.FooterMenuItems>
-
-            <ui:NavigationView.PaneFooter>
-                <Border Margin="10,6" Padding="10,6" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="6">
-                    <StackPanel>
-                        <ui:TextBlock Text="Connected Port:" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                        <ui:TextBlock Text="{Binding ActivePort, FallbackValue='COM9'}" FontWeight="Bold" Foreground="LimeGreen" FontFamily="Consolas" FontSize="11" Margin="0,2,0,0" />
-                    </StackPanel>
-                </Border>
-            </ui:NavigationView.PaneFooter>
 
             <!-- Page Container Overlay -->
             <ui:NavigationView.ContentOverlay>
@@ -127,11 +107,6 @@
                     <Border Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" />
                     </Border>
-
-                    <!-- Firmware Flasher Page -->
-                    <Border Visibility="{Binding IsFlasherActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <views:FlasherPage DataContext="{Binding Flasher}" />
-                    </Border>
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
@@ -139,20 +114,11 @@
         <!-- Global Status Bar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="10" Height="10" Fill="LimeGreen" Margin="0,0,8,0" />
                     <ui:TextBlock Text="{Binding ActivePort, StringFormat='Port: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="•" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="Iceman/master RRG" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="Stop / Abort Command" Appearance="Danger" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding CancelExecutionCommand}" />
                 </StackPanel>
             </Grid>
         </Border>

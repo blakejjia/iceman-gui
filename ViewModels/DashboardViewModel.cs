@@ -30,18 +30,39 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private HardwareInfo _hardware = new();
 
-    public event Action<string>? RequestNavigation;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsShowingMainDashboard))]
+    private bool _isShowingHardwareDetails;
+
+    public bool IsShowingMainDashboard => !IsShowingHardwareDetails;
+
+    public FlasherViewModel Flasher { get; } = new();
 
     public DashboardViewModel()
     {
         RefreshPorts();
+        Flasher.CheckFirmware();
+    }
+
+    partial void OnSelectedPortChanged(PortItem? value)
+    {
+        if (value != null)
+        {
+            Flasher.TargetPort = value.PortName;
+        }
     }
 
     [RelayCommand]
-    public void GoToScanner() => RequestNavigation?.Invoke("scanner");
+    public void ShowHardwareDetails()
+    {
+        IsShowingHardwareDetails = true;
+    }
 
     [RelayCommand]
-    public void GoToFlasher() => RequestNavigation?.Invoke("flasher");
+    public void BackToDashboard()
+    {
+        IsShowingHardwareDetails = false;
+    }
 
     [RelayCommand]
     public void RefreshPorts()
@@ -55,6 +76,10 @@ public partial class DashboardViewModel : ObservableObject
 
         // Auto-select Proxmark3 port if found
         SelectedPort = Ports.FirstOrDefault(p => p.IsProxmark) ?? Ports.FirstOrDefault();
+        if (SelectedPort != null)
+        {
+            Flasher.TargetPort = SelectedPort.PortName;
+        }
     }
 
     [RelayCommand]
@@ -72,6 +97,7 @@ public partial class DashboardViewModel : ObservableObject
         try
         {
             Pm3ProcessService.Instance.SetPort(SelectedPort.PortName);
+            Flasher.TargetPort = SelectedPort.PortName;
             var hw = await HardwareService.Instance.GetHardwareInfoAsync();
             Hardware = hw;
             IsConnected = true;
@@ -93,6 +119,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         Pm3ProcessService.Instance.StopInteractiveSession();
         IsConnected = false;
+        IsShowingHardwareDetails = false;
         StatusMessage = "Disconnected.";
     }
 
@@ -106,7 +133,6 @@ public partial class DashboardViewModel : ObservableObject
         try
         {
             await HardwareService.Instance.MeasureAntennaAsync(Hardware);
-            // Trigger property change notification
             OnPropertyChanged(nameof(Hardware));
             StatusMessage = $"Antenna tuned. LF: {Hardware.LfTuneStatus}, HF: {Hardware.HfTuneStatus}";
         }

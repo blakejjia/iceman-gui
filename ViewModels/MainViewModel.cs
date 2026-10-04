@@ -18,8 +18,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private MifareToolkitViewModel _mifareToolkit = new();
 
-    [ObservableProperty]
-    private FlasherViewModel _flasher = new();
+    public FlasherViewModel Flasher => Dashboard.Flasher;
 
     [ObservableProperty]
     private string _activePort = "Disconnected";
@@ -36,14 +35,12 @@ public partial class MainViewModel : ObservableObject
     public bool IsDashboardActive => SelectedPageTag == "dashboard";
     public bool IsScannerActive => SelectedPageTag == "scanner";
     public bool IsMifareActive => SelectedPageTag == "mifare";
-    public bool IsFlasherActive => SelectedPageTag == "flasher";
 
     partial void OnSelectedPageTagChanged(string value)
     {
         OnPropertyChanged(nameof(IsDashboardActive));
         OnPropertyChanged(nameof(IsScannerActive));
         OnPropertyChanged(nameof(IsMifareActive));
-        OnPropertyChanged(nameof(IsFlasherActive));
     }
 
     public MainViewModel()
@@ -68,8 +65,6 @@ public partial class MainViewModel : ObservableObject
                 }
             }
         };
-
-        Dashboard.RequestNavigation += tag => SelectedPageTag = tag;
 
         TagScanner.PropertyChanged += (s, e) =>
         {

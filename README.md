@@ -138,14 +138,13 @@ iceman-gui/
 │   ├── MifareService.cs               # Sector key checking, block dumping, CUID UID writer
 │   └── TagScanService.cs              # Fast ISO14443-A & full HF/LF search
 ├── ViewModels/
-│   ├── DashboardViewModel.cs          # Port selection, connect/disconnect, hardware specs
-│   ├── FlasherViewModel.cs            # Firmware flasher wizard and recovery guide
+│   ├── DashboardViewModel.cs          # Port selection, connect/disconnect, hardware specs, sub-page navigation
+│   ├── FlasherViewModel.cs            # Consolidated single-card firmware flasher & recovery guide
 │   ├── MainViewModel.cs               # Progressive disclosure state & navigation routing
 │   ├── MifareToolkitViewModel.cs      # Pure Fluent UI matrix, block editing, UID change
 │   └── TagScannerViewModel.cs         # Tag discovery and unlock triggers
 └── Views/
-    ├── DashboardPage.xaml             # Connection, hardware specs & action buttons
-    ├── FlasherPage.xaml               # Flash controls and recovery guide
+    ├── DashboardPage.xaml             # Connection, hardware specs & antenna sub-page, consolidated flasher
     ├── MifareToolkitPage.xaml         # Pure Fluent UI CardExpander matrix
     ├── TagScannerPage.xaml            # Card profile & MIFARE unlock banner
     ├── MainWindow.xaml                # Fluent Navigation Rail shell
