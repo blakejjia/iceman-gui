@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO.Ports;
 using System.Linq;
 using Microsoft.Win32;
 
@@ -23,30 +22,31 @@ public static class SerialPortDetector
     public static List<PortItem> GetAvailablePorts()
     {
         var result = new List<PortItem>();
-        var portNames = SerialPort.GetPortNames().Distinct().OrderBy(p => p).ToList();
-
         var details = GetPortDetailsFromRegistry();
 
-        foreach (var port in portNames)
+        foreach (var kvp in details)
         {
-            var item = new PortItem { PortName = port };
-            if (details.TryGetValue(port, out var desc))
+            var item = new PortItem
             {
-                item.Description = desc;
-                if (desc.Contains("USBSER", StringComparison.OrdinalIgnoreCase) ||
-                    desc.Contains("USB", StringComparison.OrdinalIgnoreCase) ||
-                    desc.Contains("ICEMAN", StringComparison.OrdinalIgnoreCase) ||
-                    desc.Contains("PROXMARK", StringComparison.OrdinalIgnoreCase))
-                {
-                    item.IsProxmark = true;
-                }
-            }
-            else
+                PortName = kvp.Key,
+                Description = kvp.Value
+            };
+
+            if (kvp.Value.Contains("USBSER", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Value.Contains("USB", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Value.Contains("ICEMAN", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Value.Contains("PROXMARK", StringComparison.OrdinalIgnoreCase))
             {
-                item.Description = "Serial Port";
+                item.IsProxmark = true;
             }
 
             result.Add(item);
+        }
+
+        // If no ports found in registry, fallback to common COM ports
+        if (result.Count == 0)
+        {
+            result.Add(new PortItem { PortName = "COM9", Description = "Default Proxmark3", IsProxmark = true });
         }
 
         // Sort Proxmark / USB ports first

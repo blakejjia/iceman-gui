@@ -12,21 +12,28 @@ public partial class App : Application
     private static extern bool AttachConsole(int dwProcessId);
     private const int ATTACH_PARENT_PROCESS = -1;
 
-    protected override async void OnStartup(StartupEventArgs e)
+    protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        DispatcherUnhandledException += (s, args) =>
+        {
+            MessageBox.Show($"Startup Error: {args.Exception.Message}\n\n{args.Exception}", "Proxmark3 Manager Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        };
 
         if (e.Args.Contains("--test"))
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             AttachConsole(ATTACH_PARENT_PROCESS);
-            bool success = await HardwareVerificationRunner.RunAllAsync();
+            bool success = HardwareVerificationRunner.RunAllAsync().GetAwaiter().GetResult();
             Shutdown(success ? 0 : 1);
             return;
         }
 
-        ShutdownMode = ShutdownMode.OnLastWindowClose;
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
         var mainWindow = new MainWindow();
+        MainWindow = mainWindow;
         mainWindow.Show();
+        mainWindow.Activate();
     }
 }

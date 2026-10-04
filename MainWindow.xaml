@@ -7,6 +7,8 @@
         Title="Proxmark3 Iceman Manager" 
         Height="780" Width="1100"
         MinHeight="600" MinWidth="850"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
         WindowStartupLocation="CenterScreen">
 
     <Grid>

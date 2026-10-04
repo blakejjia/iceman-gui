@@ -15,7 +15,7 @@
             <ui:Card Margin="0,0,0,20">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <ui:SymbolIcon Symbol="UsbPort24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+                        <ui:SymbolIcon Symbol="UsbPlug24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
                         <ui:TextBlock Text="Serial Port Connection" FontTypography="Subtitle" />
                     </StackPanel>
 
