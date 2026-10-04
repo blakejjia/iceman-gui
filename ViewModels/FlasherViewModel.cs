@@ -159,7 +159,7 @@ public partial class FlasherViewModel : ObservableObject
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://github.com/RfidResearchGroup/proxmark3/blob/master/doc/recovery.md",
+                FileName = "https://github.com/RfidResearchGroup/proxmark3/blob/master/doc/jtag_notes.md",
                 UseShellExecute = true
             });
         }

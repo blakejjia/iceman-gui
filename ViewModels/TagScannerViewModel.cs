@@ -1,8 +1,12 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using iceman_gui.Core;
 using iceman_gui.Models;
 using iceman_gui.Services;
 
@@ -14,11 +18,18 @@ public partial class TagScannerViewModel : ObservableObject
     private TagInfo? _currentTag;
 
     public bool IsMifareCardDetected => CurrentTag != null && CurrentTag.IsMifare;
+    public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
 
     partial void OnCurrentTagChanged(TagInfo? value)
     {
         OnPropertyChanged(nameof(IsMifareCardDetected));
+        OnPropertyChanged(nameof(HasCurrentTag));
     }
+
+    [ObservableProperty]
+    private bool _isAutoDetectEnabled = true;
+
+    private CancellationTokenSource? _autoDetectCts;
 
     [ObservableProperty]
     private bool _isScanning;
@@ -29,24 +40,118 @@ public partial class TagScannerViewModel : ObservableObject
     [ObservableProperty]
     private string _lastSavedPath = string.Empty;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsShowingScanner))]
+    private bool _isShowingHistory;
+
+    public bool IsShowingScanner => !IsShowingHistory;
+
+    public ObservableCollection<TagInfo> ScanHistory { get; } = new();
+
     public event Action<string>? RequestNavigation;
+
+    public TagScannerViewModel()
+    {
+        _ = LoadHistorySilentlyAsync();
+        StartAutoDetectLoop();
+    }
+
+    private void StartAutoDetectLoop()
+    {
+        _autoDetectCts?.Cancel();
+        _autoDetectCts = new CancellationTokenSource();
+        var token = _autoDetectCts.Token;
+
+        Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(1200, token);
+
+                    // Skip auto-detect probing if:
+                    // 1. Feature switch is toggled off
+                    // 2. Currently performing a scan
+                    // 3. A card is already detected and displayed (Rule: "on there is already a card, no more auto detect anymore")
+                    if (!IsAutoDetectEnabled || IsScanning || HasCurrentTag)
+                    {
+                        continue;
+                    }
+
+                    // Check if COM port is active
+                    if (!Pm3ProcessService.Instance.IsConnected)
+                    {
+                        continue;
+                    }
+
+                    // Perform lightweight presence check (~200ms)
+                    bool detected = await TagScanService.Instance.FastProbePresenceAsync(token);
+                    if (detected && !token.IsCancellationRequested && !HasCurrentTag && !IsScanning)
+                    {
+                        await Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            if (!HasCurrentTag && !IsScanning)
+                            {
+                                await ScanCardAsync();
+                            }
+                        });
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch
+                {
+                    try { await Task.Delay(2000, token); } catch { break; }
+                }
+            }
+        }, token);
+    }
 
     [RelayCommand]
     public void GoToMifare() => RequestNavigation?.Invoke("mifare");
 
     [RelayCommand]
-    public async Task QuickScanAsync()
+    public async Task ShowHistoryAsync()
     {
+        await LoadHistoryAsync();
+        IsShowingHistory = true;
+    }
+
+    [RelayCommand]
+    public void BackToScanner()
+    {
+        IsShowingHistory = false;
+    }
+
+    [RelayCommand]
+    public void SelectHistoryItem(TagInfo item)
+    {
+        if (item == null) return;
+        CurrentTag = item;
+        IsShowingHistory = false;
+        StatusMessage = $"Loaded profile from history: [{item.FormattedUid}] ({item.TagType})";
+    }
+
+    [RelayCommand]
+    public async Task ScanCardAsync()
+    {
+        if (IsScanning) return;
         IsScanning = true;
-        StatusMessage = "Quick scanning ISO14443-A card...";
+        StatusMessage = "Progressive scan in progress (Universal auto sweep across LF & HF)...";
 
         try
         {
-            var tag = await TagScanService.Instance.ScanAsync(quick: true);
+            var tag = await TagScanService.Instance.ProgressiveScanAsync();
             CurrentTag = tag;
-            if (!string.IsNullOrEmpty(tag.Uid))
+            if (!string.IsNullOrEmpty(tag.Uid) || !string.IsNullOrEmpty(tag.CardNumber))
             {
-                StatusMessage = $"Tag Found: UID [{tag.FormattedUid}] ({tag.TagType})";
+                var path = await TagScanService.Instance.AutoSaveScanAsync(tag);
+                LastSavedPath = path;
+                ScanHistory.Insert(0, tag);
+                StatusMessage = $"Tag Found & Auto-saved: [{tag.FormattedUid}] ({tag.TagType})";
             }
             else
             {
@@ -64,33 +169,19 @@ public partial class TagScannerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task FullScanAsync()
+    public void ClearCard()
     {
-        IsScanning = true;
-        StatusMessage = "Performing full HF & LF search (this may take ~20 seconds)...";
-
-        try
-        {
-            var tag = await TagScanService.Instance.ScanAsync(quick: false);
-            CurrentTag = tag;
-            if (!string.IsNullOrEmpty(tag.Uid) || !string.IsNullOrEmpty(tag.CardNumber))
-            {
-                StatusMessage = $"Tag Found: [{tag.FormattedUid}] Type: {tag.TagType}";
-            }
-            else
-            {
-                StatusMessage = "No HF or LF tag detected.";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Search error: {ex.Message}";
-        }
-        finally
-        {
-            IsScanning = false;
-        }
+        CurrentTag = null;
+        StatusMessage = IsAutoDetectEnabled
+            ? "Card cleared. Auto-detect active — place a card on the antenna."
+            : "Card cleared. Ready to scan.";
     }
+
+    [RelayCommand]
+    public Task QuickScanAsync() => ScanCardAsync();
+
+    [RelayCommand]
+    public Task FullScanAsync() => ScanCardAsync();
 
     [RelayCommand]
     public void CopyUid()
@@ -103,23 +194,51 @@ public partial class TagScannerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task SaveTagInfoAsync()
+    public void OpenDumpsFolder()
     {
-        if (CurrentTag == null || string.IsNullOrEmpty(CurrentTag.Uid))
-        {
-            StatusMessage = "No tag information to save.";
-            return;
-        }
-
         try
         {
-            string path = await TagScanService.Instance.SaveTagInfoToFileAsync(CurrentTag);
-            LastSavedPath = path;
-            StatusMessage = $"Saved tag details to: {System.IO.Path.GetFileName(path)}";
+            var env = Pm3EnvironmentResolver.Instance;
+            if (!env.IsResolved) env.Resolve();
+            Directory.CreateDirectory(env.DumpsDirectory);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{env.DumpsDirectory}\"",
+                UseShellExecute = true
+            });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Failed to save: {ex.Message}";
+            StatusMessage = $"Could not open dumps folder: {ex.Message}";
         }
+    }
+
+    public async Task LoadHistoryAsync()
+    {
+        try
+        {
+            var list = await TagScanService.Instance.LoadScanHistoryAsync();
+            ScanHistory.Clear();
+            foreach (var item in list)
+            {
+                ScanHistory.Add(item);
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadHistorySilentlyAsync()
+    {
+        try
+        {
+            var list = await TagScanService.Instance.LoadScanHistoryAsync();
+            ScanHistory.Clear();
+            foreach (var item in list)
+            {
+                ScanHistory.Add(item);
+            }
+        }
+        catch { }
     }
 }

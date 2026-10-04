@@ -6,3 +6,6 @@ obj/
 dumps/*.json
 dumps/*.eml
 dumps/*.bin
+client/.proxmark3/logs/
+client/.proxmark3/history.txt
+client/.proxmark3/preferences.json
