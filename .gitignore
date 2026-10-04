@@ -9,3 +9,4 @@ dumps/*.bin
 client/.proxmark3/logs/
 client/.proxmark3/history.txt
 client/.proxmark3/preferences.json
+dist/

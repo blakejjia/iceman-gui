@@ -29,7 +29,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
-    <None Include="client\**">
+    <None Include="client\**" Exclude="client\.proxmark3\logs\**;client\.proxmark3\history.txt;client\tmp\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
@@ -42,5 +42,13 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
+
+  <!-- Enforce that published package always bundles the complete Proxmark3 client -->
+  <Target Name="ValidatePublishedClient" AfterTargets="Publish">
+    <Error Condition="!Exists('$(PublishDir)client\proxmark3.exe')"
+           Text="Publish verification failed: '$(PublishDir)client\proxmark3.exe' does not exist. The application package must include the bundled Proxmark3 client." />
+    <Error Condition="!Exists('$(PublishDir)client\libs\Qt6Core.dll')"
+           Text="Publish verification failed: '$(PublishDir)client\libs\Qt6Core.dll' does not exist. The application package must include the bundled client libraries." />
+  </Target>
 
 </Project>

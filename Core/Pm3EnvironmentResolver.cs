@@ -50,23 +50,6 @@ public class Pm3EnvironmentResolver
             return true;
         }
 
-        // 4. Known user locations (Downloads, ProxSpace)
-        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        string[] fallbacks = new[]
-        {
-            Path.Combine(userProfile, "Downloads", "proxmark3", "client"),
-            Path.Combine(userProfile, "ProxSpace", "pm3", "proxmark3", "client")
-        };
-
-        foreach (var fb in fallbacks)
-        {
-            if (IsValidClientDir(fb))
-            {
-                SetPaths(fb, Path.GetDirectoryName(fb) ?? fb);
-                return true;
-            }
-        }
-
         return false;
     }
 

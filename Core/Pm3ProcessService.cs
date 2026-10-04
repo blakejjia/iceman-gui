@@ -56,7 +56,7 @@ public class Pm3ProcessService
 
         if (string.IsNullOrEmpty(env.ExecutablePath) || !File.Exists(env.ExecutablePath))
         {
-            throw new FileNotFoundException($"Proxmark3 client executable was not found. Expected 'client\\proxmark3.exe' in '{AppDomain.CurrentDomain.BaseDirectory}' or project folders.");
+            throw new FileNotFoundException($"Bundled Proxmark3 client was not found. Expected 'client\\proxmark3.exe' alongside 'iceman-gui.exe' in '{AppDomain.CurrentDomain.BaseDirectory}'. Please ensure the application package was extracted completely.");
         }
 
         var psi = new ProcessStartInfo
