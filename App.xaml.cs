@@ -16,9 +16,21 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        bool isHandlingException = false;
         DispatcherUnhandledException += (s, args) =>
         {
-            MessageBox.Show($"Startup Error: {args.Exception.Message}\n\n{args.Exception}", "Proxmark3 Manager Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (isHandlingException) return;
+            isHandlingException = true;
+            try
+            {
+                string crashInfo = $"[CRASH {DateTime.Now}] {args.Exception.Message}\n\n{args.Exception}";
+                System.IO.File.WriteAllText("crash.log", crashInfo);
+                Console.WriteLine(crashInfo);
+                MessageBox.Show(crashInfo, "Proxmark3 Manager Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch { }
+            args.Handled = true;
+            isHandlingException = false;
         };
 
         if (e.Args.Contains("--test"))

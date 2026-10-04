@@ -40,51 +40,14 @@
                 </Grid>
             </ui:Card>
 
-            <!-- Selected Block Data Editor Card -->
-            <ui:Card Margin="0,0,0,16">
-                <StackPanel>
-                    <Grid Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:SymbolIcon Symbol="Edit24" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
-                            <ui:TextBlock Text="Selected Block Data Editor" FontTypography="Subtitle" VerticalAlignment="Center" />
-                            <Border Margin="10,0,0,0" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                <ui:TextBlock Text="{Binding SelectedBlock.BlockNumber, StringFormat='{}Block {0:D2}', FallbackValue='No Block Selected'}" FontFamily="Consolas" FontWeight="SemiBold" FontSize="11" />
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <ui:TextBox Grid.Column="0" 
-                                    Text="{Binding EditBlockDataHex, UpdateSourceTrigger=PropertyChanged}" 
-                                    FontFamily="Consolas" 
-                                    FontSize="13"
-                                    MaxLength="32" 
-                                    PlaceholderText="Click 'Edit' on any block below to load hex data (32 hex characters / 16 bytes)" 
-                                    Margin="0,0,10,0" 
-                                    VerticalAlignment="Center" />
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
-                                             Visibility="{Binding WriteSelectedBlockCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <ui:Button Content="Write Block" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" Command="{Binding WriteSelectedBlockCommand}" />
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
-            </ui:Card>
-
-            <!-- 16 Sectors Data Matrix (Compact High-Density Grid) -->
+            <!-- 16 Sectors Data Matrix (Interactive Professional Inline Hex Grid) -->
             <StackPanel Margin="0,0,0,20">
                 <Grid Margin="0,0,0,10">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <ui:SymbolIcon Symbol="Table24" FontSize="18" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
                         <ui:TextBlock Text="Sectors &amp; Blocks Matrix (MIFARE Classic 1K)" FontTypography="Subtitle" VerticalAlignment="Center" />
                     </StackPanel>
-                    <ui:TextBlock Text="64 Blocks Total (16 Sectors x 4 Blocks)" HorizontalAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" FontSize="12" />
+                    <ui:TextBlock Text="64 Blocks Total • Click any block to edit inline • Green = Modified • Red = Illegal" HorizontalAlignment="Right" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" FontSize="12" />
                 </Grid>
 
                 <ItemsControl ItemsSource="{Binding CardData.Sectors}">
@@ -100,8 +63,8 @@
                                     <!-- Sector Slim Header -->
                                     <Grid Margin="0,0,0,4">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
+                                             <ColumnDefinition Width="Auto" />
+                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
                                         <ui:TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" />
@@ -119,13 +82,13 @@
                                     <ItemsControl ItemsSource="{Binding Blocks}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Margin="0,1" Padding="6,3" CornerRadius="4" Background="#141416">
+                                                <Border Margin="0,1.5" Padding="6,3" CornerRadius="4" Background="#141416">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="48" />
-                                                            <ColumnDefinition Width="40" />
+                                                            <ColumnDefinition Width="46" />
+                                                            <ColumnDefinition Width="38" />
                                                             <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="130" />
+                                                            <ColumnDefinition Width="135" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
 
@@ -142,20 +105,73 @@
                                                             </Border>
                                                         </StackPanel>
 
-                                                        <!-- 16 Bytes Hex Digits (High-Density Monospace) -->
-                                                        <ui:TextBlock Grid.Column="2" Text="{Binding FormattedHex}" FontFamily="Consolas" FontSize="11.5" Foreground="#38BDF8" VerticalAlignment="Center" Margin="2,0" />
+                                                        <!-- Inline Hex Editor Cell (16 Bytes / 32 Hex Digits) -->
+                                                        <Border Grid.Column="2" 
+                                                                BorderBrush="{Binding StatusBorder}" 
+                                                                BorderThickness="1" 
+                                                                Background="{Binding StatusBackground}" 
+                                                                CornerRadius="4" 
+                                                                Margin="0,0,8,0"
+                                                                ToolTip="{Binding ValidationTip}">
+                                                            <TextBox Text="{Binding EditHex, UpdateSourceTrigger=PropertyChanged}"
+                                                                     FontFamily="Cascadia Mono, Consolas"
+                                                                     FontSize="11.5"
+                                                                     FontWeight="SemiBold"
+                                                                     Foreground="{Binding StatusForeground}"
+                                                                     CaretBrush="{Binding StatusForeground}"
+                                                                     Background="Transparent"
+                                                                     BorderThickness="0"
+                                                                     MinHeight="0"
+                                                                     Height="24"
+                                                                     Padding="6,1"
+                                                                     VerticalContentAlignment="Center"
+                                                                     MaxLength="40" />
+                                                        </Border>
 
-                                                        <!-- ASCII Preview -->
-                                                        <ui:TextBlock Grid.Column="3" Text="{Binding DataAscii}" FontFamily="Consolas" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                                                        <!-- ASCII Preview Column -->
+                                                        <Border Grid.Column="3" Background="#18181B" CornerRadius="3" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <ui:TextBlock Text="{Binding DataAscii}" 
+                                                                          FontFamily="Cascadia Mono, Consolas" 
+                                                                          FontSize="11" 
+                                                                          Foreground="#94A3B8" 
+                                                                          VerticalAlignment="Center" />
+                                                        </Border>
 
                                                         <!-- Compact Action Buttons -->
                                                         <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <ui:Button Icon="{ui:SymbolIcon Edit16}" ToolTip="Edit block" Padding="5,2" Margin="0,0,4,0"
-                                                                       Command="{Binding DataContext.EditBlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                            <!-- Warning Icon for Illegal Input -->
+                                                            <ui:SymbolIcon Symbol="Warning16" 
+                                                                           Foreground="#EF4444" 
+                                                                           ToolTip="{Binding ValidationTip}"
+                                                                           Margin="0,0,6,0"
+                                                                           VerticalAlignment="Center"
+                                                                           Visibility="{Binding IsInvalid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                                                            <!-- Write modified block button (Green) -->
+                                                            <ui:Button Icon="{ui:SymbolIcon Checkmark16}" 
+                                                                       Appearance="Primary"
+                                                                       ToolTip="Write this modified block to card (hf mf wrbl)" 
+                                                                       Padding="6,2" Margin="0,0,4,0"
+                                                                       Background="#16A34A"
+                                                                       Foreground="White"
+                                                                       Visibility="{Binding CanWrite, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                                       Command="{Binding DataContext.WriteBlockDirectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                                        CommandParameter="{Binding}" />
-                                                            <ui:Button Icon="{ui:SymbolIcon Copy16}" ToolTip="Copy 32-hex data" Padding="5,2"
+
+                                                            <!-- Revert changes button -->
+                                                            <ui:Button Icon="{ui:SymbolIcon ArrowReset20}" 
+                                                                       ToolTip="Revert changes to original dump" 
+                                                                       Padding="5,2" Margin="0,0,4,0"
+                                                                       Visibility="{Binding CanRevert, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                                       Command="{Binding DataContext.RevertBlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                       CommandParameter="{Binding}" />
+
+                                                            <!-- Copy hex data -->
+                                                            <ui:Button Icon="{ui:SymbolIcon Copy16}" 
+                                                                       ToolTip="Copy hex data" 
+                                                                       Padding="5,2"
                                                                        Command="{Binding DataContext.CopyHexCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                                       CommandParameter="{Binding DataHex}" />
+                                                                       CommandParameter="{Binding EditHex}" />
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>

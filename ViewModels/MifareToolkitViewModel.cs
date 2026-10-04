@@ -32,29 +32,6 @@ public partial class MifareToolkitViewModel : ObservableObject
     [ObservableProperty]
     private int _progressValue;
 
-    [ObservableProperty]
-    private MifareBlock? _selectedBlock;
-
-    [ObservableProperty]
-    private string _editBlockDataHex = string.Empty;
-
-    partial void OnSelectedBlockChanged(MifareBlock? value)
-    {
-        if (value != null)
-        {
-            EditBlockDataHex = value.DataHex;
-        }
-    }
-
-    [RelayCommand]
-    public void EditBlock(MifareBlock? block)
-    {
-        if (block == null) return;
-        SelectedBlock = block;
-        EditBlockDataHex = block.DataHex;
-        StatusMessage = $"Selected Block {block.BlockNumber:D2} for editing. Modify hex data and click 'Write Block'.";
-    }
-
     [RelayCommand]
     public void CopyHex(string? hex)
     {
@@ -119,50 +96,52 @@ public partial class MifareToolkitViewModel : ObservableObject
 
 
     [RelayCommand]
-    public async Task WriteSelectedBlockAsync()
+    public async Task WriteBlockDirectAsync(MifareBlock? block)
     {
-        if (SelectedBlock == null)
-        {
-            StatusMessage = "Select a block from the sector list first.";
-            return;
-        }
+        if (block == null) return;
 
-        if (string.IsNullOrWhiteSpace(EditBlockDataHex) || EditBlockDataHex.Length != 32)
+        if (!block.IsValid)
         {
-            StatusMessage = "Block data must be exactly 32 hex characters (16 bytes).";
+            StatusMessage = $"Cannot write block {block.BlockNumber:D2}: {block.ValidationTip}";
             return;
         }
 
         IsBusy = true;
-        StatusMessage = $"Writing block {SelectedBlock.BlockNumber}...";
+        StatusMessage = $"Writing block {block.BlockNumber:D2}...";
 
         try
         {
-            int secNum = SelectedBlock.BlockNumber / 4;
+            int secNum = block.BlockNumber / 4;
             string keyA = CardData.Sectors[secNum].KeyA;
+            string cleanHex = block.EditHex.Trim().ToUpperInvariant();
 
-            bool ok = await MifareService.Instance.WriteBlockAsync(SelectedBlock.BlockNumber, keyA, EditBlockDataHex);
+            bool ok = await MifareService.Instance.WriteBlockAsync(block.BlockNumber, keyA, cleanHex);
             if (ok)
             {
-                SelectedBlock.DataHex = EditBlockDataHex.ToUpperInvariant();
-                SelectedBlock.DataAscii = MifareBlock.HexToAscii(EditBlockDataHex);
-                OnPropertyChanged(nameof(SelectedBlock));
-                OnPropertyChanged(nameof(CardData));
-                StatusMessage = $"Block {SelectedBlock.BlockNumber} written successfully!";
+                block.MarkSaved();
+                StatusMessage = $"Block {block.BlockNumber:D2} written successfully!";
             }
             else
             {
-                StatusMessage = $"Failed to write block {SelectedBlock.BlockNumber}.";
+                StatusMessage = $"Failed to write block {block.BlockNumber:D2}. Check keys or card permissions.";
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Write error: {ex.Message}";
+            StatusMessage = $"Write error on block {block.BlockNumber:D2}: {ex.Message}";
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    public void RevertBlock(MifareBlock? block)
+    {
+        if (block == null) return;
+        block.Revert();
+        StatusMessage = $"Reverted block {block.BlockNumber:D2} to original dump data.";
     }
 
     [RelayCommand]
