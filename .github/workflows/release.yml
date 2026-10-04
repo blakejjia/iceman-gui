@@ -1,0 +1,70 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release Windows Package
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore iceman-gui.csproj
+
+      - name: Build Application
+        run: dotnet build iceman-gui.csproj -c Release --no-restore
+
+      - name: Publish Binaries (win-x64)
+        run: |
+          dotnet publish iceman-gui.csproj -c Release -r win-x64 --self-contained false -o publish/
+
+      - name: Copy Documentation & License to Release
+        shell: pwsh
+        run: |
+          Copy-Item -Path "README.md", "LICENSE" -Destination "publish\" -ErrorAction SilentlyContinue
+
+      - name: Package Release Zip & Checksums
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "publish\*" -DestinationPath "iceman-gui-windows-x64.zip" -Force
+          $hash = (Get-FileHash -Path "iceman-gui-windows-x64.zip" -Algorithm SHA256).Hash
+          "$hash  iceman-gui-windows-x64.zip" | Out-File -Encoding ascii SHA256SUMS.txt
+          Write-Host "Archive created. SHA256: $hash"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            iceman-gui-windows-x64.zip
+            SHA256SUMS.txt
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
