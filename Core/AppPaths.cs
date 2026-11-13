@@ -50,6 +50,11 @@ public static class AppPaths
         {
             foreach (string file in Directory.GetFiles(legacyDumpsDirectory))
             {
+                if (Path.GetFileName(file).StartsWith("scans_", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
                 string destination = Path.Combine(DumpsDirectory, Path.GetFileName(file));
                 if (!File.Exists(destination))
                 {

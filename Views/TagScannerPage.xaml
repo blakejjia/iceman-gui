@@ -7,8 +7,7 @@
         <!-- VIEW 1: Main Tag Scanner View                                 -->
         <!-- ============================================================== -->
         <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      Style="{StaticResource FluentEntranceStyle}"
-                      Visibility="{Binding IsShowingScanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      Style="{StaticResource FluentEntranceStyle}">
             <StackPanel Margin="24">
                 <!-- Header -->
                 <StackPanel Margin="0,0,0,20">
@@ -17,342 +16,242 @@
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
                 </StackPanel>
 
-                <!-- Scan Operations Card -->
-                <ui:Card Margin="0,0,0,20">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:Button Content="Scan Card" Appearance="Primary" Icon="{ui:SymbolIcon Scan24}" Command="{Binding ScanCardCommand}" Margin="0,0,16,0" />
-                            <ui:Button Content="Clear Card" Appearance="Secondary" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding ClearCardCommand}" Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
-                                             Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <ProgressBar Width="120" Height="6" IsIndeterminate="{Binding IsScanning}" Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </StackPanel>
-                    </Grid>
-                </ui:Card>
-
-                <!-- Backup Card -->
-                <ui:Card Margin="0,0,0,20"
-                         Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <ui:SymbolIcon Symbol="Save24" FontSize="20"
-                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
-                                               Margin="0,0,8,0" />
-                                <ui:TextBlock Text="Back up this card" FontTypography="Subtitle" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <ui:Button Grid.Column="1"
-                                       Content="Open Card Library"
-                                       Icon="{ui:SymbolIcon FolderOpen24}"
-                                       Command="{Binding OpenLibraryCommand}"
-                                       Visibility="{Binding HasBackupEntry, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </Grid>
-
-                        <ui:TextBlock Text="{Binding BackupHint}"
+                <!-- Empty state -->
+                <Border Visibility="{Binding HasNoTag, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Padding="24,32"
+                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                        CornerRadius="8"
+                        Margin="0,0,0,16">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="TagDismiss24" FontSize="40"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,0,0,12" />
+                        <ui:TextBlock Text="No card on the antenna"
+                                      FontTypography="BodyStrong" FontSize="16"
+                                      HorizontalAlignment="Center" Margin="0,0,0,4" />
+                        <ui:TextBlock Text="Place a card on the Proxmark3 and scan it."
                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                      TextWrapping="Wrap"
-                                      Margin="0,0,0,10" />
+                                      FontSize="12"
+                                      HorizontalAlignment="Center" />
+                        <ui:Button Content="Scan Card"
+                                   Appearance="Primary"
+                                   Icon="{ui:SymbolIcon Scan24}"
+                                   Command="{Binding ScanCardCommand}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,16,0,0" />
+                        <ProgressBar Width="120" Height="6" IsIndeterminate="{Binding IsScanning}"
+                                     Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                     Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
 
-                        <Grid Margin="0,0,0,8">
+                <!-- Card information -->
+                <StackPanel Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                        <ProgressBar Width="100" Height="6" IsIndeterminate="{Binding IsScanning}"
+                                     Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                     Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <ui:Button Content="Scan Card" Appearance="Primary" Icon="{ui:SymbolIcon Scan24}"
+                                   Command="{Binding ScanCardCommand}" Margin="0,0,8,0" />
+                        <ui:Button Content="Clear Card" Appearance="Secondary" Icon="{ui:SymbolIcon Dismiss24}"
+                                   Command="{Binding ClearCardCommand}" />
+                    </StackPanel>
+
+                    <!-- UID banner -->
+                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            Padding="16" CornerRadius="8" Margin="0,0,0,16">
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ui:TextBox Text="{Binding BackupAlias, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="Name this backup (optional)"
-                                        VerticalAlignment="Center"
-                                        Margin="0,0,10,0" />
-                            <ui:Button Grid.Column="1"
-                                       Content="Back up card"
-                                       Appearance="Primary"
-                                       Icon="{ui:SymbolIcon Save24}"
-                                       Command="{Binding BackupCardCommand}"
-                                       IsEnabled="{Binding CanBackup}" />
-                        </Grid>
 
-                        <StackPanel Visibility="{Binding HasBackupStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <ProgressBar Height="4"
-                                         IsIndeterminate="{Binding IsBackingUp}"
-                                         Visibility="{Binding IsBackingUp, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         Margin="0,0,0,6" />
-                            <ui:TextBlock Text="{Binding BackupStatus}"
-                                          TextWrapping="Wrap"
-                                          FontSize="12"
-                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-                </ui:Card>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <ui:TextBlock Text="Card UID / CSN"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                  Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <Border Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                            CornerRadius="4" Padding="6,1" Margin="0,0,6,0"
+                                            Visibility="{Binding CurrentTag.HasStandard, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <ui:TextBlock Text="{Binding CurrentTag.Standard}" FontSize="11"
+                                                      Foreground="White" FontWeight="SemiBold" />
+                                    </Border>
+                                </StackPanel>
 
-                <!-- Detected Tag Profile Card -->
-                <ui:Card Margin="0,0,0,20">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,16">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <ui:SymbolIcon Symbol="ContactCard24" FontSize="20" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
-                                <ui:TextBlock Text="Detected Tag Profile" FontTypography="Subtitle" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{Binding CurrentTag.FormattedUid, FallbackValue='No Card Detected'}"
+                                              FontSize="28" FontWeight="Bold" FontFamily="Consolas"
+                                              Margin="0,0,0,4" />
+
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='Place card on antenna and click Scan'}"
+                                                  Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                  FontTypography="BodyStrong" Margin="0,0,12,0" />
+                                    <ui:TextBlock Text="{Binding CurrentTag.Manufacturer}"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                  FontSize="12" VerticalAlignment="Center"
+                                                  Visibility="{Binding CurrentTag.HasManufacturer, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
                             </StackPanel>
 
-                        </Grid>
-
-                        <!-- Empty State (No Card Detected on Antenna) -->
-                        <Border Visibility="{Binding HasNoTag, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Padding="24,32"
-                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="8">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <ui:SymbolIcon Symbol="TagDismiss24" FontSize="40" Foreground="{DynamicResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,12" />
-                                <ui:TextBlock Text="No Tag Detected" FontTypography="BodyStrong" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,4" />
-                                <ui:TextBlock Text="No RFID or NFC tag was detected on the antenna. Place a card and click 'Scan Card'." 
-                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
-                                              FontSize="12"
-                                              HorizontalAlignment="Center" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                                <ui:Button Content="Copy UID"
+                                           Icon="{ui:SymbolIcon Copy24}"
+                                           Command="{Binding CopyUidCommand}"
+                                           HorizontalAlignment="Stretch"
+                                           Margin="0,0,0,6" />
+                                <ui:Button Content="Write New UID"
+                                           Appearance="Primary"
+                                           Icon="{ui:SymbolIcon Edit24}"
+                                           Command="{Binding OpenWriteUidDialogCommand}"
+                                           Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           HorizontalAlignment="Stretch" />
+                                <Border Visibility="{Binding CannotWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="6,5"
+                                        HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Prohibited20" FontSize="14"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <ui:TextBlock Text="Write tag not supported" FontSize="11"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                      VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
+                        </Grid>
+                    </Border>
 
-                        <!-- Detected Card Details (Visible only when tag is detected) -->
-                        <StackPanel Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <!-- UID Big Display Banner -->
-                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Padding="16" CornerRadius="8" Margin="0,0,0,16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <ui:TextBlock Text="Card UID / CSN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                            <Border Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="4" Padding="6,1" Margin="0,0,6,0"
-                                                    Visibility="{Binding CurrentTag.HasStandard, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                <ui:TextBlock Text="{Binding CurrentTag.Standard}" FontSize="11" Foreground="White" FontWeight="SemiBold" />
-                                            </Border>
-                                        </StackPanel>
-
-                                        <ui:TextBlock Text="{Binding CurrentTag.FormattedUid, FallbackValue='No Card Detected'}" FontSize="28" FontWeight="Bold" FontFamily="Consolas" Margin="0,0,0,4" />
-
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='Place card on antenna and click Scan'}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" FontTypography="BodyStrong" Margin="0,0,12,0" />
-                                            <ui:TextBlock Text="{Binding CurrentTag.Manufacturer}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Visibility="{Binding CurrentTag.HasManufacturer, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
-                                        <ui:Button Content="Copy UID" 
-                                                   Icon="{ui:SymbolIcon Copy24}" 
-                                                   Command="{Binding CopyUidCommand}" 
-                                                   HorizontalAlignment="Stretch" 
-                                                   Margin="0,0,0,6" />
-                                        <ui:Button Content="Write New UID" 
-                                                   Appearance="Primary" 
-                                                   Icon="{ui:SymbolIcon Edit24}" 
-                                                   Command="{Binding OpenWriteUidDialogCommand}" 
-                                                   Visibility="{Binding CanWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}" 
-                                                   HorizontalAlignment="Stretch" />
-                                        <Border Visibility="{Binding CannotWriteUid, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
-                                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="4"
-                                                Padding="6,5"
-                                                HorizontalAlignment="Stretch">
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <ui:SymbolIcon Symbol="Prohibited20" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                                <ui:TextBlock Text="Write tag not supported" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <!-- Comprehensive Tag Specifications Grid -->
-                            <Grid Margin="4,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-
-                                <!-- Row 0: Standard, Chip Model, Manufacturer -->
-                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
-                                    <ui:TextBlock Text="Standard / Make" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Standard, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
-                                    <ui:TextBlock Text="Chip / Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,6">
-                                    <ui:TextBlock Text="IC Manufacturer" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Manufacturer, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <!-- Row 1: Frequency, UID Length, PRNG -->
-                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,6">
-                                    <ui:TextBlock Text="Frequency" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Frequency, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,6">
-                                    <ui:TextBlock Text="UID Structure" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.UidLength, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,6">
-                                    <ui:TextBlock Text="PRNG Detection" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Prng, FallbackValue='-'}" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <!-- Row 2: ATQA, SAK, Magic Capabilities -->
-                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
-                                    <ui:TextBlock Text="ATQA" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Atqa, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
-                                    <ui:TextBlock Text="SAK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Sak, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
-                                    <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}" FontTypography="BodyStrong" Foreground="LimeGreen" />
-                                </StackPanel>
-
-                                <!-- Row 3: ATS & Historical Bytes (High-Security / ISO-DEP Cards) -->
-                                <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,6" Grid.ColumnSpan="2" Visibility="{Binding CurrentTag.HasAts, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <ui:TextBlock Text="Answer To Select (ATS)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.Ats}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.AtsDetails}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CurrentTag.HasAtsDetails, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,6" Visibility="{Binding CurrentTag.HasHistoricalBytes, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <ui:TextBlock Text="Historical Bytes" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <ui:TextBlock Text="{Binding CurrentTag.HistoricalBytes}" FontFamily="Consolas" FontTypography="BodyStrong" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </StackPanel>
-                </ui:Card>
-
-                <!-- History CardAction (Replacing raw terminal output) -->
-                <ui:CardAction Command="{Binding ShowHistoryCommand}"
-                               IsChevronVisible="True"
-                               Margin="0,0,0,20">
-                    <Grid Margin="0,4">
+                    <!-- Specifications -->
+                    <Grid Margin="4,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Symbol="History24" 
-                                       FontSize="22" 
-                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" 
-                                       Margin="0,0,16,0" 
-                                       VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <ui:TextBlock Text="Scan History" FontTypography="BodyStrong" FontSize="14" />
-                            <ui:TextBlock Text="Browse auto-saved RFID/NFC scan records, timestamps, and card details." 
-                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
-                                          FontSize="12" 
-                                          Margin="0,2,0,0" />
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,6">
+                            <ui:TextBlock Text="Standard / Make" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Standard, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,6">
+                            <ui:TextBlock Text="Chip / Model" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.TagType, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,6">
+                            <ui:TextBlock Text="IC Manufacturer" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Manufacturer, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,6">
+                            <ui:TextBlock Text="Frequency" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Frequency, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,6">
+                            <ui:TextBlock Text="UID Structure" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.UidLength, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,6">
+                            <ui:TextBlock Text="PRNG Detection" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Prng, FallbackValue='-'}" FontTypography="BodyStrong" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,6">
+                            <ui:TextBlock Text="ATQA" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Atqa, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,6">
+                            <ui:TextBlock Text="SAK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Sak, FallbackValue='-'}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
+                            <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}"
+                                          FontTypography="BodyStrong" Foreground="LimeGreen" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,6" Grid.ColumnSpan="2"
+                                    Visibility="{Binding CurrentTag.HasAts, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ui:TextBlock Text="Answer To Select (ATS)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.Ats}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                            <ui:TextBlock Text="{Binding CurrentTag.AtsDetails}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                          FontSize="11" Margin="0,2,0,0"
+                                          Visibility="{Binding CurrentTag.HasAtsDetails, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,6"
+                                    Visibility="{Binding CurrentTag.HasHistoricalBytes, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ui:TextBlock Text="Historical Bytes" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ui:TextBlock Text="{Binding CurrentTag.HistoricalBytes}" FontFamily="Consolas" FontTypography="BodyStrong" />
                         </StackPanel>
                     </Grid>
-                </ui:CardAction>
-            </StackPanel>
-        </ScrollViewer>
+                </StackPanel>
 
-        <!-- ============================================================== -->
-        <!-- VIEW 2: Scan History Sub-Page                                  -->
-        <!-- ============================================================== -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      Style="{StaticResource FluentEntranceStyle}"
-                      Visibility="{Binding IsShowingHistory, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel Margin="24">
-                <!-- Navigation Back Button -->
-                <ui:Button Content="Back to Read Card" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToScannerCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
+                <!-- Backup -->
+                <StackPanel Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,16,0,0">
+                    <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,0,0,16" />
 
-                <!-- Sub-page Header -->
-                <Grid Margin="0,0,0,20">
-                    <StackPanel>
-                        <ui:TextBlock Text="Scan History" FontTypography="Title" />
-                        <ui:TextBlock Text="Auto-saved RFID/NFC scan logs with complete cryptographic and physical specifications." 
-                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Save24" FontSize="20"
+                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                           Margin="0,0,8,0" />
+                            <ui:TextBlock Text="Back up this card" FontTypography="Subtitle" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ui:Button Grid.Column="1"
+                                   Content="Open Card Library"
+                                   Icon="{ui:SymbolIcon FolderOpen24}"
+                                   Command="{Binding OpenLibraryCommand}"
+                                   Visibility="{Binding HasBackupEntry, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
+
+                    <ui:TextBlock Text="{Binding BackupHint}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  TextWrapping="Wrap"
+                                  Margin="0,0,0,10" />
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Text="{Binding BackupAlias, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="Name this backup (optional)"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,10,0" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Back up card"
+                                   Appearance="Primary"
+                                   Icon="{ui:SymbolIcon Save24}"
+                                   Command="{Binding BackupCardCommand}"
+                                   IsEnabled="{Binding CanBackup}" />
+                    </Grid>
+
+                    <StackPanel Visibility="{Binding HasBackupStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ProgressBar Height="4"
+                                     IsIndeterminate="{Binding IsBackingUp}"
+                                     Visibility="{Binding IsBackingUp, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                     Margin="0,0,0,6" />
+                        <ui:TextBlock Text="{Binding BackupStatus}"
+                                      TextWrapping="Wrap"
+                                      FontSize="12"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <ui:Button HorizontalAlignment="Right" Content="Open Dumps Folder" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding OpenDumpsFolderCommand}" />
-                </Grid>
-
-                <!-- Scan History List -->
-                <ItemsControl ItemsSource="{Binding ScanHistory}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <ui:Card Margin="0,0,0,10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel VerticalAlignment="Center">
-                                        <!-- Top Row: Timestamp & Badges -->
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <ui:SymbolIcon Symbol="Clock20" FontSize="14" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                            <ui:TextBlock Text="{Binding FormattedTimestamp}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0" />
-
-                                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                                <ui:TextBlock Text="{Binding Standard}" FontSize="11" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" FontWeight="SemiBold" />
-                                            </Border>
-
-                                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="6,2">
-                                                <ui:TextBlock Text="{Binding Frequency}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- UID & Model -->
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                            <ui:TextBlock Text="{Binding FormattedUid}" FontFamily="Consolas" FontSize="18" FontWeight="Bold" Margin="0,0,12,0" VerticalAlignment="Center" />
-                                            <ui:TextBlock Text="{Binding TagType}" FontTypography="BodyStrong" VerticalAlignment="Center" Margin="0,0,10,0" />
-                                            <ui:TextBlock Text="{Binding Manufacturer}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center" />
-                                        </StackPanel>
-
-                                        <!-- ATQA / SAK / ATS summary -->
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:TextBlock Text="{Binding Atqa, StringFormat='ATQA: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,10,0" />
-                                            <ui:TextBlock Text="{Binding Sak, StringFormat='SAK: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,10,0" />
-                                            <ui:TextBlock Text="{Binding Ats, StringFormat='ATS: {0}'}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Visibility="{Binding HasAts, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <!-- Load to Profile Action -->
-                                    <ui:Button Grid.Column="1" 
-                                               Content="View Profile" 
-                                               Icon="{ui:SymbolIcon ArrowRight24}"
-                                               VerticalAlignment="Center"
-                                               Command="{Binding DataContext.SelectHistoryItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                               CommandParameter="{Binding}" />
-                                </Grid>
-                            </ui:Card>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 

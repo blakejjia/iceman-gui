@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -406,68 +405,16 @@ public class TagScanService
         return info;
     }
 
-    public async Task<string> AutoSaveScanAsync(TagInfo info)
-    {
-        var env = Pm3EnvironmentResolver.Instance;
-        if (!env.IsResolved) env.Resolve();
-
-        Directory.CreateDirectory(env.DumpsDirectory);
-        string dateStr = DateTime.Now.ToString("yyyy-MM-dd");
-        string filePath = Path.Combine(env.DumpsDirectory, $"scans_{dateStr}.json");
-
-        var list = new List<TagInfo>();
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                string existing = await File.ReadAllTextAsync(filePath);
-                var loaded = JsonSerializer.Deserialize<List<TagInfo>>(existing);
-                if (loaded != null) list.AddRange(loaded);
-            }
-            catch { }
-        }
-
-        // Add newest scan at top
-        list.Insert(0, info);
-
-        var options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(list, options);
-        await File.WriteAllTextAsync(filePath, json);
-
-        return filePath;
-    }
-
-    public async Task<List<TagInfo>> LoadScanHistoryAsync()
-    {
-        var env = Pm3EnvironmentResolver.Instance;
-        if (!env.IsResolved) env.Resolve();
-
-        var result = new List<TagInfo>();
-        if (!Directory.Exists(env.DumpsDirectory)) return result;
-
-        var files = Directory.GetFiles(env.DumpsDirectory, "scans_*.json")
-            .OrderByDescending(f => f)
-            .ToList();
-
-        foreach (var file in files)
-        {
-            try
-            {
-                string content = await File.ReadAllTextAsync(file);
-                var items = JsonSerializer.Deserialize<List<TagInfo>>(content);
-                if (items != null) result.AddRange(items);
-            }
-            catch { }
-        }
-
-        return result.OrderByDescending(t => t.ScanTime).ToList();
-    }
-
     public async Task<string> SaveTagInfoToFileAsync(TagInfo info, string? customPath = null)
     {
         if (customPath == null)
         {
-            return await AutoSaveScanAsync(info);
+            var env = Pm3EnvironmentResolver.Instance;
+            if (!env.IsResolved) env.Resolve();
+            Directory.CreateDirectory(env.DumpsDirectory);
+
+            string uid = string.IsNullOrWhiteSpace(info.Uid) ? "tag" : info.Uid;
+            customPath = Path.Combine(env.DumpsDirectory, $"tag_{uid}_{DateTime.Now:yyyyMMdd_HHmmss}.json");
         }
 
         var options = new JsonSerializerOptions { WriteIndented = true };

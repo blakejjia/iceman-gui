@@ -1,7 +1,5 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -128,44 +126,7 @@ public partial class TagScannerViewModel : ObservableObject
         OnPropertyChanged(nameof(CannotBackup));
     }
 
-    [ObservableProperty]
-    private string _lastSavedPath = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsShowingScanner))]
-    private bool _isShowingHistory;
-
-    public bool IsShowingScanner => !IsShowingHistory;
-
-    public ObservableCollection<TagInfo> ScanHistory { get; } = new();
-
     public event Action<string>? RequestNavigation;
-
-    public TagScannerViewModel()
-    {
-        _ = LoadHistorySilentlyAsync();
-    }
-
-    [RelayCommand]
-    public async Task ShowHistoryAsync()
-    {
-        await LoadHistoryAsync();
-        IsShowingHistory = true;
-    }
-
-    [RelayCommand]
-    public void BackToScanner()
-    {
-        IsShowingHistory = false;
-    }
-
-    [RelayCommand]
-    public void SelectHistoryItem(TagInfo item)
-    {
-        if (item == null) return;
-        CurrentTag = item;
-        IsShowingHistory = false;
-    }
 
     [RelayCommand]
     public async Task ScanCardAsync()
@@ -179,9 +140,6 @@ public partial class TagScannerViewModel : ObservableObject
             if (!string.IsNullOrEmpty(tag.Uid) || !string.IsNullOrEmpty(tag.CardNumber))
             {
                 CurrentTag = tag;
-                var path = await TagScanService.Instance.AutoSaveScanAsync(tag);
-                LastSavedPath = path;
-                ScanHistory.Insert(0, tag);
             }
             else
             {
@@ -290,8 +248,6 @@ public partial class TagScannerViewModel : ObservableObject
                 CurrentTag.Uid = cleanHex;
                 CurrentTag.FormattedUid = string.Join(" ", Enumerable.Range(0, 4).Select(i => cleanHex.Substring(i * 2, 2)));
                 OnPropertyChanged(nameof(CurrentTag));
-
-                await TagScanService.Instance.AutoSaveScanAsync(CurrentTag);
             }
         }
         catch (Exception ex)
@@ -359,52 +315,4 @@ public partial class TagScannerViewModel : ObservableObject
     [RelayCommand]
     public void OpenLibrary() => RequestNavigation?.Invoke("library");
 
-    [RelayCommand]
-    public void OpenDumpsFolder()
-    {
-        try
-        {
-            var env = Pm3EnvironmentResolver.Instance;
-            if (!env.IsResolved) env.Resolve();
-            Directory.CreateDirectory(env.DumpsDirectory);
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "explorer.exe",
-                Arguments = $"\"{env.DumpsDirectory}\"",
-                UseShellExecute = true
-            });
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Could not open dumps folder: {ex.Message}");
-        }
-    }
-
-    public async Task LoadHistoryAsync()
-    {
-        try
-        {
-            var list = await TagScanService.Instance.LoadScanHistoryAsync();
-            ScanHistory.Clear();
-            foreach (var item in list)
-            {
-                ScanHistory.Add(item);
-            }
-        }
-        catch { }
-    }
-
-    private async Task LoadHistorySilentlyAsync()
-    {
-        try
-        {
-            var list = await TagScanService.Instance.LoadScanHistoryAsync();
-            ScanHistory.Clear();
-            foreach (var item in list)
-            {
-                ScanHistory.Add(item);
-            }
-        }
-        catch { }
-    }
 }
