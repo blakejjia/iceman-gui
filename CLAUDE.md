@@ -49,6 +49,10 @@ Notable behaviors:
 
 `client/` is a full Iceman distribution (exe, Qt/MinGW DLLs, dictionaries, lualibs, cmdscripts, `bootrom.elf`, `fullimage.elf`); `recovery/` holds recovery bins. The csproj copies `assets/`, `client/`, `recovery/` and `*.bat` to the output and fails the `Publish` target if `client\proxmark3.exe` or `client\libs\Qt6Core.dll` is missing — `package.ps1` and the workflow repeat that check. Keep those three places in sync when changing packaging. `client/.proxmark3/` logs/history/preferences and `dumps/*.json|*.eml|*.bin` are gitignored.
 
+## Upstream reference docs
+
+`docs/proxmark3/` contains the upstream Iceman client documentation (`commands.md`, `commands.json`, `cheatsheet.md`, MIFARE/magic-card notes, standalone mode) at the commit recorded in `docs/proxmark3/ATTRIBUTION.md`. Consult it for command syntax and expected console output before touching a parser. It tracks upstream `main`, while the bundled client is a snapshot — captured client logs in `client/.proxmark3/logs/` and `dumps/` remain the ground truth for what this build actually prints.
+
 ## UI
 
 Dark theme only (`ui:ThemesDictionary Theme="Dark"` in `App.xaml`), Mica window backdrop, `FluentEntranceStyle` applied to each page container for the fade/slide transition. Use `DynamicResource` theme brushes for text/surfaces; the views intentionally use fixed hex accents for status colors (e.g. `#4ADE80` green for valid/modified, `#F87171` red for illegal, cyan for untouched).
