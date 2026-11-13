@@ -67,11 +67,12 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Action 1: Hardware Specs (Windows 11 Settings pattern with chevron) -->
+                <!-- Action 1: Hardware Specs (visible but disabled until a device is connected) -->
                 <ui:CardAction Command="{Binding ShowHardwareDetailsCommand}"
                                IsChevronVisible="True"
                                Margin="0,0,0,12"
-                               Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                               IsEnabled="{Binding IsConnected}"
+                               Opacity="{Binding DeviceControlsOpacity}">
                     <Grid Margin="0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -115,6 +116,35 @@
                         </StackPanel>
                     </Grid>
                 </ui:CardAction>
+
+                <!-- Appearance -->
+                <ui:Card Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Settings24"
+                                           FontSize="22"
+                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                           Margin="0,0,16,0"
+                                           VerticalAlignment="Center" />
+                            <StackPanel>
+                                <ui:TextBlock Text="Appearance" FontTypography="BodyStrong" FontSize="14" />
+                                <ui:TextBlock Text="Choose a light or dark interface. The setting is remembered."
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              FontSize="12"
+                                              Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  Width="160"
+                                  VerticalAlignment="Center"
+                                  ItemsSource="{Binding ThemeOptions}"
+                                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+                    </Grid>
+                </ui:Card>
             </StackPanel>
         </ScrollViewer>
 

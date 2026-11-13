@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,6 +43,23 @@ public partial class DashboardViewModel : ObservableObject
     private bool _isShowingOsDetails;
 
     public bool IsShowingMainDashboard => !IsShowingHardwareDetails && !IsShowingOsDetails;
+
+    public IReadOnlyList<string> ThemeOptions { get; } = new[] { "Dark", "Light", "System" };
+
+    [ObservableProperty]
+    private string _selectedTheme = ThemeService.Current.ToString();
+
+    partial void OnSelectedThemeChanged(string value)
+    {
+        if (Enum.TryParse(value, ignoreCase: true, out AppTheme theme))
+        {
+            ThemeService.SetTheme(theme);
+        }
+    }
+
+    public double DeviceControlsOpacity => IsConnected ? 1.0 : 0.35;
+
+    partial void OnIsConnectedChanged(bool value) => OnPropertyChanged(nameof(DeviceControlsOpacity));
 
     public FlasherViewModel Flasher { get; } = new();
 

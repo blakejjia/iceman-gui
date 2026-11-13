@@ -19,6 +19,7 @@ public partial class App : Application
         var environment = Pm3EnvironmentResolver.Instance;
         environment.Resolve();
         AppPaths.EnsureCreated();
+        ThemeService.Initialize();
         if (environment.IsResolved)
         {
             AppPaths.MigrateLegacyDumps(System.IO.Path.Combine(environment.RootDirectory, "dumps"));

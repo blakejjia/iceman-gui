@@ -8,24 +8,24 @@ echo ===================================================
 echo.
 
 cd /d "%~dp0client"
-call setup.bat
+call "%~dp0client\setup.bat"
 
 :: If a port argument was given (e.g. pm3.bat COM8), use that port directly
 if not "%~1"=="" (
     echo [*] Connecting to %~1 ...
-    proxmark3.exe %~1 -w
+    "%~dp0client\proxmark3.exe" %~1 -w
     goto :DONE
 )
 
 :: Connect directly to COM9
 echo [*] Connecting to Proxmark3 on COM9 ...
-proxmark3.exe COM9 -w
+"%~dp0client\proxmark3.exe" COM9 -w
 
 :: If COM9 fails, run auto-detection through bash pm3
 if errorlevel 1 (
     echo.
     echo [*] COM9 not responding, starting auto-detection...
-    bash pm3
+    bash "%~dp0client\pm3"
 )
 
 :DONE

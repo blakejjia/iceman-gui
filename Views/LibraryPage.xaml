@@ -198,8 +198,6 @@
                             <ui:Button Content="Write to card" Appearance="Primary"
                                        Icon="{ui:SymbolIcon Save24}"
                                        Command="{Binding WriteToCardCommand}" Margin="0,0,8,0" />
-                            <ui:Button Content="Block Editor" Icon="{ui:SymbolIcon DocumentEdit24}"
-                                       Command="{Binding OpenInEditorCommand}" Margin="0,0,8,0" />
                             <ui:Button Content="Open JSON" Icon="{ui:SymbolIcon DocumentText24}"
                                        Command="{Binding OpenJsonCommand}" Margin="0,0,8,0" />
                             <ui:Button Content="Folder" Icon="{ui:SymbolIcon FolderOpen24}"

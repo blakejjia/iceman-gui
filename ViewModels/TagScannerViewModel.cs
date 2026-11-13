@@ -21,7 +21,6 @@ public partial class TagScannerViewModel : ObservableObject
     [ObservableProperty]
     private TagInfo? _currentTag;
 
-    public bool IsMifareCardDetected => CurrentTag != null && CurrentTag.IsMifare;
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
     public bool HasNoTag => !HasCurrentTag;
     public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
@@ -47,7 +46,6 @@ public partial class TagScannerViewModel : ObservableObject
 
     partial void OnCurrentTagChanged(TagInfo? value)
     {
-        OnPropertyChanged(nameof(IsMifareCardDetected));
         OnPropertyChanged(nameof(HasCurrentTag));
         OnPropertyChanged(nameof(HasNoTag));
         OnPropertyChanged(nameof(CanWriteUid));

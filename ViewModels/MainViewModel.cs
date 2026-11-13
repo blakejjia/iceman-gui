@@ -16,9 +16,6 @@ public partial class MainViewModel : ObservableObject
     private TagScannerViewModel _tagScanner = new();
 
     [ObservableProperty]
-    private MifareToolkitViewModel _mifareToolkit = new();
-
-    [ObservableProperty]
     private LibraryViewModel _library = new();
 
     [ObservableProperty]
@@ -36,30 +33,25 @@ public partial class MainViewModel : ObservableObject
     private bool _isConnected;
 
     [ObservableProperty]
-    private bool _isMifareDetected;
-
-    [ObservableProperty]
     private string _selectedPageTag = "dashboard";
 
     public bool IsDashboardActive => SelectedPageTag == "dashboard";
     public bool IsScannerActive => SelectedPageTag == "scanner";
-    public bool IsMifareActive => SelectedPageTag == "mifare";
     public bool IsLibraryActive => SelectedPageTag == "library";
     public bool IsWriteActive => SelectedPageTag == "write";
     public bool IsKeysActive => SelectedPageTag == "keys";
 
-    private string _pageBeforeMifare = "library";
+    public double DeviceUiOpacity => IsConnected ? 1.0 : 0.35;
+
+    partial void OnIsConnectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(DeviceUiOpacity));
+    }
 
     partial void OnSelectedPageTagChanged(string value)
     {
-        if (value != "mifare")
-        {
-            _pageBeforeMifare = value;
-        }
-
         OnPropertyChanged(nameof(IsDashboardActive));
         OnPropertyChanged(nameof(IsScannerActive));
-        OnPropertyChanged(nameof(IsMifareActive));
         OnPropertyChanged(nameof(IsLibraryActive));
         OnPropertyChanged(nameof(IsWriteActive));
         OnPropertyChanged(nameof(IsKeysActive));
@@ -98,7 +90,6 @@ public partial class MainViewModel : ObservableObject
                 IsConnected = Dashboard.IsConnected;
                 if (!IsConnected)
                 {
-                    IsMifareDetected = false;
                     SelectedPageTag = "dashboard";
                 }
                 else
@@ -122,34 +113,9 @@ public partial class MainViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsAppBusy));
             }
-            if (e.PropertyName == nameof(TagScanner.CurrentTag))
-            {
-                var tag = TagScanner.CurrentTag;
-                if (tag != null && (tag.IsMifare || 
-                    tag.TagType.Contains("MIFARE", StringComparison.OrdinalIgnoreCase) ||
-                    tag.TagType.Contains("ISO14443-A", StringComparison.OrdinalIgnoreCase)))
-                {
-                    IsMifareDetected = true;
-                    // Also seed MifareToolkit with this card's UID
-                    if (!string.IsNullOrEmpty(tag.Uid))
-                    {
-                        MifareToolkit.CardData.Uid = tag.Uid;
-                    }
-                }
-            }
         };
 
         TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
-        MifareToolkit.RequestNavigation += tag =>
-        {
-            SelectedPageTag = tag == "back" ? _pageBeforeMifare : tag;
-        };
-
-        Library.OpenBackupRequested += entry =>
-        {
-            MifareToolkit.LoadBackup(entry);
-            SelectedPageTag = "mifare";
-        };
 
         Library.WriteToCardRequested += entry =>
         {
@@ -187,7 +153,7 @@ public partial class MainViewModel : ObservableObject
             else
             {
                 // Direct fallback using setup.bat in client directory
-                cmdArgs = $"/k \"cd /d \"{env.ClientDirectory}\" && if exist setup.bat call setup.bat && proxmark3.exe {port} -w\"";
+                cmdArgs = $"/k \"cd /d \"{env.ClientDirectory}\" && if exist \"{env.ClientDirectory}\\setup.bat\" call \"{env.ClientDirectory}\\setup.bat\" && \"{env.ClientDirectory}\\proxmark3.exe\" {port} -w\"";
             }
 
             var psi = new ProcessStartInfo

@@ -365,8 +365,8 @@
             <Border Width="480"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="#1E1E22"
-                    BorderBrush="#38383E"
+                    Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
                     Padding="24">
@@ -389,7 +389,7 @@
                                   Margin="0,0,0,16" />
 
                     <!-- Current UID -->
-                    <Border Background="#28282E" BorderBrush="#38383E" BorderThickness="1" Padding="12,8" CornerRadius="6" Margin="0,0,0,16">
+                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="12,8" CornerRadius="6" Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock Text="Current UID:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <ui:TextBlock Text="{Binding CurrentTag.FormattedUid}" FontFamily="Consolas" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
@@ -397,7 +397,7 @@
                     </Border>
 
                     <!-- Auto-Detected Magic Capabilities Mode -->
-                    <Border Background="#28282E" BorderBrush="#38383E" BorderThickness="1" Padding="14,10" CornerRadius="6" Margin="0,0,0,16">
+                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="14,10" CornerRadius="6" Margin="0,0,0,16">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -405,7 +405,7 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <ui:TextBlock Text="Detected Magic Mode" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <ui:TextBlock Text="{Binding DetectedMagicModeText}" FontTypography="BodyStrong" Foreground="#38BDF8" Margin="0,2,0,0" />
+                                <ui:TextBlock Text="{Binding DetectedMagicModeText}" FontTypography="BodyStrong" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,2,0,0" />
                             </StackPanel>
                             <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Background="#064E3B" CornerRadius="4" Padding="8,4">
                                 <ui:TextBlock Text="Auto-Selected" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" />
@@ -439,8 +439,8 @@
                     <Border Margin="0,0,0,16"
                             Padding="12,8"
                             CornerRadius="6"
-                            Background="#28282E"
-                            BorderBrush="#38383E"
+                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             Visibility="{Binding HasWriteUidResult, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">

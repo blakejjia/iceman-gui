@@ -39,7 +39,6 @@ public partial class LibraryViewModel : ObservableObject
     public bool HasEntries => Entries.Count > 0;
     public bool HasNoEntries => !HasEntries;
 
-    public event Action<DumpEntry>? OpenBackupRequested;
     public event Action<DumpEntry>? WriteToCardRequested;
 
     partial void OnEntriesChanged(ObservableCollection<DumpEntry> value)
@@ -120,17 +119,6 @@ public partial class LibraryViewModel : ObservableObject
         DumpLibrary.SetAlias(SelectedEntry.Uid, alias);
         Refresh(SelectedEntry.Uid);
         SetStatus("Alias saved.");
-    }
-
-    [RelayCommand]
-    public void OpenInEditor()
-    {
-        if (SelectedEntry == null)
-        {
-            return;
-        }
-
-        OpenBackupRequested?.Invoke(SelectedEntry);
     }
 
     [RelayCommand]

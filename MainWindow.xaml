@@ -83,7 +83,8 @@
                                        Content="Read Card"
                                        Tag="scanner"
                                        Click="OnNavClick"
-                                       IsEnabled="{Binding IsConnected}">
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Search24" />
                     </ui:NavigationViewItem.Icon>
@@ -94,7 +95,8 @@
                                        Content="Write Card"
                                        Tag="write"
                                        Click="OnNavClick"
-                                       IsEnabled="{Binding IsConnected}">
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Save24" />
                     </ui:NavigationViewItem.Icon>
@@ -171,11 +173,6 @@
                         <views:KeysPage DataContext="{Binding Keys}" />
                     </Border>
 
-                    <!-- Mifare Toolkit Page -->
-                    <Border Style="{StaticResource FluentEntranceStyle}"
-                            Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" />
-                    </Border>
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
