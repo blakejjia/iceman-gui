@@ -133,6 +133,7 @@ public partial class FlasherViewModel : ObservableObject
             }
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Flashing firmware");
         HasFlashingStarted = true;
         IsFlashing = true;
         IsFlashSuccess = false;

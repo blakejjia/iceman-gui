@@ -68,6 +68,9 @@ public partial class WriteViewModel : ObservableObject
     [ObservableProperty]
     private string _verifyStatus = string.Empty;
 
+    [ObservableProperty]
+    private bool _writeFailed;
+
     public ObservableCollection<WizardStep> Steps { get; } = new();
 
     [ObservableProperty]
@@ -96,7 +99,7 @@ public partial class WriteViewModel : ObservableObject
     public bool CanGoNext => CurrentStep switch
     {
         1 => SelectedSource != null,
-        2 => TargetTag != null,
+        2 => TargetTag != null && TargetCapabilities.IsClassic,
         3 => KeysReady,
         _ => false
     };
@@ -124,6 +127,21 @@ public partial class WriteViewModel : ObservableObject
                             && !IsWriting
                             && !IsVerifying;
 
+    public bool HasTarget => TargetTag != null;
+    public bool CardSupported => TargetTag != null && TargetCapabilities.IsClassic;
+    public bool CardUnsupported => TargetTag != null && !TargetCapabilities.IsClassic;
+    public bool ReadyToWrite => CanWrite;
+    public bool ShowCheckIcon => CardSupported && !WriteFailed;
+    public bool ShowDismissIcon => CardUnsupported && !WriteFailed;
+    public bool ShowErrorIcon => WriteFailed;
+    public bool ShowWriteAnother => VerifyOk;
+    public bool ShowWriteButton => IsStep4Visible && !VerifyOk;
+    public string ReadinessText => VerifyOk ? "Verified"
+        : WriteFailed ? "Write failed"
+        : ReadyToWrite ? "Ready to write"
+        : CardSupported ? "Card supported"
+        : "Not supported";
+
     public Brush VerifyBrush => VerifyOk ? Brushes.LimeGreen : Brushes.LightCoral;
 
     partial void OnSelectedSourceChanged(DumpEntry? value) => NotifyGateStates();
@@ -134,7 +152,13 @@ public partial class WriteViewModel : ObservableObject
     partial void OnTargetKeyPathChanged(string value) => NotifyGateStates();
     partial void OnIsWritingChanged(bool value) => NotifyGateStates();
     partial void OnIsVerifyingChanged(bool value) => NotifyGateStates();
-    partial void OnVerifyOkChanged(bool value) => OnPropertyChanged(nameof(VerifyBrush));
+    partial void OnVerifyOkChanged(bool value)
+    {
+        OnPropertyChanged(nameof(VerifyBrush));
+        NotifyReadiness();
+    }
+
+    partial void OnWriteFailedChanged(bool value) => NotifyReadiness();
 
     public void RefreshSources(DumpEntry? select = null)
     {
@@ -191,6 +215,7 @@ public partial class WriteViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Reading target card");
         IsReadingTarget = true;
         TargetStatus = "Reading the target card...";
         DefaultKeysOk = false;
@@ -250,6 +275,7 @@ public partial class WriteViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Checking keys");
         IsCheckingKeys = true;
         DefaultKeysOk = false;
         TargetKeyPath = string.Empty;
@@ -281,6 +307,7 @@ public partial class WriteViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Finding keys (autopwn)");
         IsCheckingKeys = true;
         KeyStatus = "Finding the target keys (autopwn)...";
 
@@ -335,7 +362,9 @@ public partial class WriteViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Writing card");
         IsWriting = true;
+        WriteFailed = false;
         HasVerifyResult = false;
         VerifyStatus = string.Empty;
         WriteLog = string.Empty;
@@ -388,6 +417,7 @@ public partial class WriteViewModel : ObservableObject
 
             if (!writeResult.Success)
             {
+                WriteFailed = true;
                 WriteStatus = "Write failed: " + (writeResult.Error ?? writeResult.Failure.ToString());
                 AppendLog(writeResult.Output);
                 return;
@@ -396,18 +426,21 @@ public partial class WriteViewModel : ObservableObject
             WriteStatus = "Write finished. Verifying the card...";
             IsVerifying = true;
 
+            using var verifying = Pm3Activity.Instance.Begin("Verifying card");
             WriteVerification verification = await MifareService.Instance.VerifyAsync(
                 SelectedSource.DumpJsonPath,
                 keyPath,
                 checkUid: fullClone);
 
             VerifyOk = verification.Success;
+            WriteFailed = !verification.Success;
             VerifyStatus = verification.Message;
             HasVerifyResult = true;
             WriteStatus = verification.Success ? "Done." : "Write finished, but verification found differences.";
         }
         catch (Exception ex)
         {
+            WriteFailed = true;
             WriteStatus = "Write error: " + ex.Message;
         }
         finally
@@ -415,6 +448,25 @@ public partial class WriteViewModel : ObservableObject
             IsVerifying = false;
             IsWriting = false;
         }
+    }
+
+    [RelayCommand]
+    public void StartNewWrite()
+    {
+        CurrentStep = 1;
+        TargetTag = null;
+        TargetStatus = "Connect the device, then read the target card.";
+        DefaultKeysOk = false;
+        TargetKeyPath = string.Empty;
+        KeyStatus = "Read the target card first.";
+        WriteStatus = string.Empty;
+        WriteLog = string.Empty;
+        HasWriteLog = false;
+        HasVerifyResult = false;
+        VerifyOk = false;
+        VerifyStatus = string.Empty;
+        WriteFailed = false;
+        UpdateSteps();
     }
 
     private void AppendLog(string? text)
@@ -436,6 +488,11 @@ public partial class WriteViewModel : ObservableObject
         OnPropertyChanged(nameof(CanFindKeys));
         OnPropertyChanged(nameof(CanWriteUid));
         OnPropertyChanged(nameof(CanWrite));
+        OnPropertyChanged(nameof(HasTarget));
+        OnPropertyChanged(nameof(CardSupported));
+        OnPropertyChanged(nameof(CardUnsupported));
+        OnPropertyChanged(nameof(ReadyToWrite));
+        NotifyReadiness();
         UpdateSteps();
     }
 
@@ -455,7 +512,7 @@ public partial class WriteViewModel : ObservableObject
             {
                 1 => true,
                 2 => SelectedSource != null,
-                3 => TargetTag != null,
+                3 => TargetTag != null && TargetCapabilities.IsClassic,
                 4 => keysReady,
                 _ => false
             };
@@ -469,5 +526,17 @@ public partial class WriteViewModel : ObservableObject
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoNext));
         OnPropertyChanged(nameof(KeysReady));
+        OnPropertyChanged(nameof(ShowWriteButton));
+        OnPropertyChanged(nameof(ShowWriteAnother));
+    }
+
+    private void NotifyReadiness()
+    {
+        OnPropertyChanged(nameof(ReadinessText));
+        OnPropertyChanged(nameof(ShowCheckIcon));
+        OnPropertyChanged(nameof(ShowDismissIcon));
+        OnPropertyChanged(nameof(ShowErrorIcon));
+        OnPropertyChanged(nameof(ShowWriteAnother));
+        OnPropertyChanged(nameof(ShowWriteButton));
     }
 }

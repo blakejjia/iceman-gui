@@ -32,6 +32,7 @@ public partial class TagScannerViewModel : ObservableObject
         OnPropertyChanged(nameof(CanBackup));
         OnPropertyChanged(nameof(CannotBackup));
         OnPropertyChanged(nameof(BackupHint));
+        OnPropertyChanged(nameof(BackupUnsupported));
 
         BackupStatus = string.Empty;
         HasBackupStatus = false;
@@ -55,6 +56,11 @@ public partial class TagScannerViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasBackupEntry;
+
+    [ObservableProperty]
+    private bool _backupFailed;
+
+    public bool BackupUnsupported => HasCurrentTag && !Capabilities.CanBackup;
 
     [ObservableProperty]
     private bool _isNamingBackup;
@@ -84,6 +90,7 @@ public partial class TagScannerViewModel : ObservableObject
     {
         if (IsScanning) return;
         IsScanning = true;
+        using var activity = Pm3Activity.Instance.Begin("Scanning card");
 
         try
         {
@@ -137,7 +144,9 @@ public partial class TagScannerViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Backing up card");
         IsBackingUp = true;
+        BackupFailed = false;
         HasBackupEntry = false;
         HasBackupStatus = true;
         BackupStatus = "Finding keys and reading the card...";
@@ -149,6 +158,7 @@ public partial class TagScannerViewModel : ObservableObject
 
             if (!result.Success)
             {
+                BackupFailed = true;
                 BackupStatus = result.Failure switch
                 {
                     Pm3Failure.Unsupported => result.Error ?? "This card does not support automatic backup.",
@@ -162,6 +172,7 @@ public partial class TagScannerViewModel : ObservableObject
 
             if (entry == null)
             {
+                BackupFailed = true;
                 BackupStatus = "The backup finished, but no dump files were found. Check the client dump path.";
                 return;
             }
@@ -174,6 +185,7 @@ public partial class TagScannerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            BackupFailed = true;
             BackupStatus = "Backup error: " + ex.Message;
         }
         finally

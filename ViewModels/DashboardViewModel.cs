@@ -73,6 +73,27 @@ public partial class DashboardViewModel : ObservableObject
             BackToDashboard();
             await ConnectAsync();
         };
+
+        _ = TryAutoConnectAsync();
+    }
+
+    private async Task TryAutoConnectAsync()
+    {
+        try
+        {
+            PortItem? detected = Ports.FirstOrDefault(port => port.IsProxmark && port.IsDetected);
+            if (detected == null)
+            {
+                return;
+            }
+
+            SelectedPort = detected;
+            await ConnectAsync();
+        }
+        catch
+        {
+            // Auto-connect is best-effort and must not affect startup.
+        }
     }
 
     partial void OnSelectedPortChanged(PortItem? value)
@@ -125,12 +146,18 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public async Task ConnectAsync()
     {
+        if (IsConnected || IsBusy)
+        {
+            return;
+        }
+
         if (SelectedPort == null)
         {
             StatusMessage = "No COM port selected.";
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Connecting to device");
         IsBusy = true;
         HasConnectionError = false;
         StatusMessage = $"Connecting to {SelectedPort.PortName}...";
@@ -179,6 +206,7 @@ public partial class DashboardViewModel : ObservableObject
     public async Task MeasureAntennaAsync()
     {
         if (SelectedPort == null) return;
+        using var activity = Pm3Activity.Instance.Begin("Tuning antenna");
         IsBusy = true;
         StatusMessage = "Tuning antenna (hw tune)...";
 

@@ -70,16 +70,12 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public bool IsAppBusy => Dashboard.IsBusy || TagScanner.IsScanning || Flasher.IsFlashing;
+    public Pm3Activity Activity => Pm3Activity.Instance;
 
     public MainViewModel()
     {
         Dashboard.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(Dashboard.IsBusy))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
             if (e.PropertyName == nameof(Dashboard.SelectedPort))
             {
                 ActivePort = Dashboard.SelectedPort?.PortName ?? "Disconnected";
@@ -95,22 +91,6 @@ public partial class MainViewModel : ObservableObject
                 {
                     ActivePort = Dashboard.SelectedPort?.PortName ?? "Connected";
                 }
-            }
-        };
-
-        Dashboard.Flasher.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(Flasher.IsFlashing))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
-        };
-
-        TagScanner.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(TagScanner.IsScanning))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
             }
         };
 

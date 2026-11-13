@@ -70,12 +70,34 @@
             <ui:NavigationView.MenuItems>
                 <!-- Dashboard (Always visible) -->
                 <ui:NavigationViewItem x:Name="NavDashboard"
-                                       Content="Device"
                                        Tag="dashboard"
                                        Click="OnNavClick">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
+                    <ui:NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:TextBlock Text="Device" VerticalAlignment="Center" />
+                            <Border Background="#14351F"
+                                    BorderBrush="#22C55E"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="6,1"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Device connected"
+                                    Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="CheckmarkCircle16" FontSize="11"
+                                                   Foreground="#4ADE80" Margin="0,0,4,0"
+                                                   VerticalAlignment="Center" />
+                                    <ui:TextBlock Text="Connected" FontSize="10"
+                                                  Foreground="#4ADE80" FontWeight="SemiBold"
+                                                  VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ui:NavigationViewItem.Content>
                 </ui:NavigationViewItem>
 
                 <!-- Read Card (visible but greyed out until a device is connected) -->
@@ -138,13 +160,6 @@
             <!-- Page Container Overlay -->
             <ui:NavigationView.ContentOverlay>
                 <Grid>
-                    <!-- Global Activity Bar (fluent indeterminate glowing bar at top of window when any operation is running) -->
-                    <ProgressBar Height="2.5"
-                                 VerticalAlignment="Top"
-                                 IsIndeterminate="True"
-                                 Visibility="{Binding IsAppBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                 Panel.ZIndex="999" />
-
                     <!-- Dashboard Page -->
                     <Border Style="{StaticResource FluentEntranceStyle}"
                             Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -182,11 +197,25 @@
         <!-- Global Status Bar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="{Binding ActivePort, StringFormat='Port: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="•" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="Iceman/master RRG" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Dedicated PM3 activity area: always visible at the bottom right -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding Activity.IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,8,0" />
+                    <ui:TextBlock Text="{Binding Activity.Description, StringFormat='PM3 · {0}'}"
+                                  FontSize="12"
+                                  Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 </StackPanel>
             </Grid>
         </Border>

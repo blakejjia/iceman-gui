@@ -134,15 +134,17 @@
                             <ui:TextBlock Text="Read the target card" FontTypography="Subtitle" Margin="0,0,0,10" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <ui:Button Content="Read target card"
-                                           Appearance="Primary"
+                                <ui:Button AutomationProperties.Name="Read target card" Appearance="Primary"
                                            Icon="{ui:SymbolIcon Scan24}"
                                            Command="{Binding ReadTargetCommand}"
                                            IsEnabled="{Binding CanReadTarget}"
-                                           Margin="0,0,12,0" />
-                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                                 Visibility="{Binding IsReadingTarget, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 VerticalAlignment="Center" />
+                                           Margin="0,0,12,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock Text="Read target card" VerticalAlignment="Center" />
+                                        <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                         Visibility="{Binding ReadTargetCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ui:Button>
                             </StackPanel>
 
                             <ui:TextBlock Text="{Binding TargetStatus}"
@@ -160,19 +162,26 @@
                             <ui:TextBlock Text="Target keys" FontTypography="Subtitle" Margin="0,0,0,10" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <ui:Button Content="Check default keys"
-                                           Icon="{ui:SymbolIcon Key24}"
+                                <ui:Button AutomationProperties.Name="Check default keys" Icon="{ui:SymbolIcon Key24}"
                                            Command="{Binding CheckKeysCommand}"
                                            IsEnabled="{Binding CanCheckKeys}"
-                                           Margin="0,0,12,0" />
-                                <ui:Button Content="Find keys (autopwn)"
-                                           Icon="{ui:SymbolIcon Search24}"
+                                           Margin="0,0,12,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock Text="Check default keys" VerticalAlignment="Center" />
+                                        <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                         Visibility="{Binding CheckKeysCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ui:Button>
+                                <ui:Button AutomationProperties.Name="Find keys (autopwn)" Icon="{ui:SymbolIcon Search24}"
                                            Command="{Binding FindKeysCommand}"
                                            IsEnabled="{Binding CanFindKeys}"
-                                           Margin="0,0,12,0" />
-                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                                 Visibility="{Binding IsCheckingKeys, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 VerticalAlignment="Center" />
+                                           Margin="0,0,12,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock Text="Find keys (autopwn)" VerticalAlignment="Center" />
+                                        <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                         Visibility="{Binding FindKeysCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ui:Button>
                             </StackPanel>
 
                             <ui:TextBlock Text="Autopwn reads the target card to recover its keys and keeps a backup of it. It can take a few minutes on locked cards."
@@ -199,18 +208,6 @@
                                       IsChecked="{Binding WriteUid, Mode=TwoWay}"
                                       IsEnabled="{Binding CanWriteUid}"
                                       Margin="0,0,0,10" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <ui:Button Content="Write full card"
-                                           Appearance="Primary"
-                                           Icon="{ui:SymbolIcon Save24}"
-                                           Command="{Binding WriteCommand}"
-                                           IsEnabled="{Binding CanWrite}"
-                                           Margin="0,0,12,0" />
-                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                                 Visibility="{Binding IsWriting, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 VerticalAlignment="Center" />
-                            </StackPanel>
 
                             <ui:TextBlock Text="{Binding WriteStatus}"
                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -241,7 +238,7 @@
                 </Border>
             </Grid>
 
-            <!-- Navigation -->
+            <!-- Navigation and next step (always bottom-right) -->
             <Grid Margin="0,16,0,0">
                 <ui:Button Content="Back"
                            Icon="{ui:SymbolIcon ArrowLeft24}"
@@ -249,14 +246,58 @@
                            Command="{Binding PreviousStepCommand}"
                            IsEnabled="{Binding CanGoBack}"
                            HorizontalAlignment="Left"
+                           VerticalAlignment="Bottom"
                            Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <ui:Button Content="Continue"
-                           Appearance="Primary"
-                           Icon="{ui:SymbolIcon ArrowRight24}"
-                           Command="{Binding NextStepCommand}"
-                           IsEnabled="{Binding CanGoNext}"
-                           HorizontalAlignment="Right"
-                           Visibility="{Binding ShowContinue, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10"
+                                Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="44" Foreground="#4ADE80"
+                                       Margin="0,0,12,0" VerticalAlignment="Center"
+                                       Visibility="{Binding ShowCheckIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <ui:SymbolIcon Symbol="DismissCircle24" FontSize="44" Foreground="#F87171"
+                                       Margin="0,0,12,0" VerticalAlignment="Center"
+                                       Visibility="{Binding ShowDismissIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="44" Foreground="#F87171"
+                                       Margin="0,0,12,0" VerticalAlignment="Center"
+                                       Visibility="{Binding ShowErrorIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <ui:TextBlock Text="{Binding ReadinessText}" FontTypography="BodyStrong" FontSize="14"
+                                          HorizontalAlignment="Right" />
+                            <ui:TextBlock Text="{Binding TargetTag.FormattedUid, StringFormat='Target {0}'}"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          FontSize="11"
+                                          HorizontalAlignment="Right"
+                                          Margin="0,2,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <ui:Button Content="Continue"
+                                   Appearance="Primary"
+                                   Icon="{ui:SymbolIcon ArrowRight24}"
+                                   Command="{Binding NextStepCommand}"
+                                   IsEnabled="{Binding CanGoNext}"
+                                   Margin="0,0,8,0"
+                                   Visibility="{Binding ShowContinue, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <ui:Button AutomationProperties.Name="Write full card" Appearance="Primary"
+                                   Icon="{ui:SymbolIcon Save24}"
+                                   Command="{Binding WriteCommand}"
+                                   IsEnabled="{Binding CanWrite}"
+                                   Visibility="{Binding ShowWriteButton, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:TextBlock Text="Write full card" VerticalAlignment="Center" />
+                                <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                 Visibility="{Binding WriteCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Content="Write another"
+                                   Appearance="Primary"
+                                   Icon="{ui:SymbolIcon ArrowClockwise24}"
+                                   Command="{Binding StartNewWriteCommand}"
+                                   Visibility="{Binding ShowWriteAnother, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </StackPanel>
     </ScrollViewer>

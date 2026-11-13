@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using iceman_gui.Core;
 using iceman_gui.Models;
 using iceman_gui.Services;
 
@@ -46,6 +47,9 @@ public partial class EditUidViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _writeSucceeded;
+
+    [ObservableProperty]
+    private bool _writeFailed;
 
     public ObservableCollection<WizardStep> Steps { get; } = new();
 
@@ -91,7 +95,22 @@ public partial class EditUidViewModel : ObservableObject
                             && !IsWriting
                             && !IsReadingTarget;
 
-    public Brush StatusBrush => WriteSucceeded ? Brushes.LimeGreen : Brushes.LightCoral;
+    public bool HasTarget => TargetTag != null;
+    public bool CardSupported => TargetTag != null && TargetCapabilities.CanChangeUid;
+    public bool CardUnsupported => TargetTag != null && !TargetCapabilities.CanChangeUid;
+    public bool ReadyToWrite => CanWrite;
+    public bool ShowCheckIcon => CardSupported && !WriteFailed;
+    public bool ShowDismissIcon => CardUnsupported && !WriteFailed;
+    public bool ShowErrorIcon => WriteFailed;
+    public bool ShowWriteAnother => WriteSucceeded;
+    public bool ShowWriteButton => IsStep3Visible && !WriteSucceeded;
+    public string ReadinessText => WriteSucceeded ? "Verified"
+        : WriteFailed ? "Write failed"
+        : ReadyToWrite ? "Ready to write"
+        : CardSupported ? "UID writable"
+        : "UID not writable";
+
+    public Brush StatusBrush => WriteSucceeded ? Brushes.LimeGreen : WriteFailed ? Brushes.LightCoral : Brushes.Gray;
 
     partial void OnTargetTagChanged(TagInfo? value) => NotifyGateStates();
     partial void OnIsReadingTargetChanged(bool value) => NotifyGateStates();
@@ -108,7 +127,17 @@ public partial class EditUidViewModel : ObservableObject
         NotifyGateStates();
     }
 
-    partial void OnWriteSucceededChanged(bool value) => OnPropertyChanged(nameof(StatusBrush));
+    partial void OnWriteSucceededChanged(bool value)
+    {
+        OnPropertyChanged(nameof(StatusBrush));
+        NotifyReadiness();
+    }
+
+    partial void OnWriteFailedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(StatusBrush));
+        NotifyReadiness();
+    }
 
     [RelayCommand]
     public async Task ReadTargetAsync()
@@ -118,6 +147,7 @@ public partial class EditUidViewModel : ObservableObject
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Reading target card");
         IsReadingTarget = true;
         TargetStatus = "Reading the target card...";
         HasStatus = false;
@@ -202,9 +232,11 @@ public partial class EditUidViewModel : ObservableObject
         }
 
         string uid = NewUid.Trim().ToUpperInvariant();
+        using var activity = Pm3Activity.Instance.Begin("Writing UID");
         IsWriting = true;
         HasStatus = true;
         WriteSucceeded = false;
+        WriteFailed = false;
         Status = IsGen1a
             ? "Writing the UID through the Gen 1a backdoor..."
             : "Writing block 0 (UID + BCC)...";
@@ -218,6 +250,7 @@ public partial class EditUidViewModel : ObservableObject
 
             if (!success)
             {
+                WriteFailed = true;
                 Status = message;
                 return;
             }
@@ -235,22 +268,40 @@ public partial class EditUidViewModel : ObservableObject
                 }
                 else
                 {
+                    WriteFailed = true;
                     Status = $"Write reported success, but the card now reads {verify.FormattedUid}.";
                 }
             }
             catch (Exception ex)
             {
+                WriteFailed = true;
                 Status = message + " (Could not re-read the card: " + ex.Message + ")";
             }
         }
         catch (Exception ex)
         {
+            WriteFailed = true;
             Status = "UID write error: " + ex.Message;
         }
         finally
         {
             IsWriting = false;
         }
+    }
+
+    [RelayCommand]
+    public void StartNewUid()
+    {
+        CurrentStep = 1;
+        TargetTag = null;
+        TargetStatus = "Read a target card first.";
+        NewUid = string.Empty;
+        KeyA = "FFFFFFFFFFFF";
+        Status = string.Empty;
+        HasStatus = false;
+        WriteSucceeded = false;
+        WriteFailed = false;
+        UpdateSteps();
     }
 
     private void NotifyGateStates()
@@ -261,6 +312,11 @@ public partial class EditUidViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowKeyA));
         OnPropertyChanged(nameof(CanReadTarget));
         OnPropertyChanged(nameof(CanWrite));
+        OnPropertyChanged(nameof(HasTarget));
+        OnPropertyChanged(nameof(CardSupported));
+        OnPropertyChanged(nameof(CardUnsupported));
+        OnPropertyChanged(nameof(ReadyToWrite));
+        NotifyReadiness();
         UpdateSteps();
     }
 
@@ -293,5 +349,17 @@ public partial class EditUidViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowContinue));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoNext));
+        OnPropertyChanged(nameof(ShowWriteButton));
+        OnPropertyChanged(nameof(ShowWriteAnother));
+    }
+
+    private void NotifyReadiness()
+    {
+        OnPropertyChanged(nameof(ReadinessText));
+        OnPropertyChanged(nameof(ShowCheckIcon));
+        OnPropertyChanged(nameof(ShowDismissIcon));
+        OnPropertyChanged(nameof(ShowErrorIcon));
+        OnPropertyChanged(nameof(ShowWriteAnother));
+        OnPropertyChanged(nameof(ShowWriteButton));
     }
 }
