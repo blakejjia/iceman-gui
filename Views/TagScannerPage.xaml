@@ -159,7 +159,7 @@
                         <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,6">
                             <ui:TextBlock Text="Magic Capabilities" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <ui:TextBlock Text="{Binding CurrentTag.DisplayMagicType, FallbackValue='Standard (Non-Magic)'}"
-                                          FontTypography="BodyStrong" Foreground="LimeGreen" />
+                                          FontTypography="BodyStrong" Foreground="{DynamicResource SystemFillColorSuccessBrush}" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,6" Grid.ColumnSpan="2"
@@ -185,19 +185,19 @@
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12"
                                 Visibility="{Binding BackupUnsupported, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:SymbolIcon Symbol="DismissCircle24" FontSize="44" Foreground="#F87171"
+                        <ui:SymbolIcon Symbol="DismissCircle24" FontSize="44" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        Margin="0,0,12,0" VerticalAlignment="Center" />
                         <ui:TextBlock Text="Backup is not supported for this card type."
-                                      FontTypography="BodyStrong" Foreground="#F87171"
+                                      FontTypography="BodyStrong" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                       VerticalAlignment="Center" TextWrapping="Wrap" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12"
                                 Visibility="{Binding BackupFailed, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="44" Foreground="#F87171"
+                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="44" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        Margin="0,0,12,0" VerticalAlignment="Center" />
                         <ui:TextBlock Text="Backup failed"
-                                      FontTypography="BodyStrong" Foreground="#F87171"
+                                      FontTypography="BodyStrong" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                       VerticalAlignment="Center" />
                     </StackPanel>
 

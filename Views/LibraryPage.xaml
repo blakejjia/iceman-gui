@@ -104,7 +104,7 @@
                                             Padding="6,2"
                                             Visibility="{Binding HasKeys, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <ui:TextBlock Text="keys" FontSize="10"
-                                                      Foreground="#4ADE80" FontWeight="SemiBold" />
+                                                      Foreground="{DynamicResource SystemFillColorSuccessBrush}" FontWeight="SemiBold" />
                                     </Border>
                                 </Grid>
 

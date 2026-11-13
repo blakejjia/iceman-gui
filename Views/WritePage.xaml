@@ -229,9 +229,22 @@
                                         Visibility="{Binding HasVerifyResult, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <ui:TextBlock Text="Verification" FontTypography="BodyStrong" Margin="0,0,0,4" />
                                 <ui:TextBlock Text="{Binding VerifyStatus}"
-                                              Foreground="{Binding VerifyBrush}"
                                               FontWeight="SemiBold"
-                                              TextWrapping="Wrap" />
+                                              TextWrapping="Wrap">
+                                    <ui:TextBlock.Style>
+                                        <Style TargetType="ui:TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding VerifyOk}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding WriteFailed}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:TextBlock.Style>
+                                </ui:TextBlock>
                             </StackPanel>
                         </StackPanel>
                     </ui:Card>
@@ -252,13 +265,13 @@
                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10"
                                 Visibility="{Binding HasTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="44" Foreground="#4ADE80"
+                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="44" Foreground="{DynamicResource SystemFillColorSuccessBrush}"
                                        Margin="0,0,12,0" VerticalAlignment="Center"
                                        Visibility="{Binding ShowCheckIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <ui:SymbolIcon Symbol="DismissCircle24" FontSize="44" Foreground="#F87171"
+                        <ui:SymbolIcon Symbol="DismissCircle24" FontSize="44" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        Margin="0,0,12,0" VerticalAlignment="Center"
                                        Visibility="{Binding ShowDismissIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="44" Foreground="#F87171"
+                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="44" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                        Margin="0,0,12,0" VerticalAlignment="Center"
                                        Visibility="{Binding ShowErrorIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <StackPanel VerticalAlignment="Center">

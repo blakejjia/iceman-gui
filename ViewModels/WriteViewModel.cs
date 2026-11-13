@@ -142,8 +142,6 @@ public partial class WriteViewModel : ObservableObject
         : CardSupported ? "Card supported"
         : "Not supported";
 
-    public Brush VerifyBrush => VerifyOk ? Brushes.LimeGreen : Brushes.LightCoral;
-
     partial void OnSelectedSourceChanged(DumpEntry? value) => NotifyGateStates();
     partial void OnTargetTagChanged(TagInfo? value) => NotifyGateStates();
     partial void OnIsReadingTargetChanged(bool value) => NotifyGateStates();
@@ -154,7 +152,6 @@ public partial class WriteViewModel : ObservableObject
     partial void OnIsVerifyingChanged(bool value) => NotifyGateStates();
     partial void OnVerifyOkChanged(bool value)
     {
-        OnPropertyChanged(nameof(VerifyBrush));
         NotifyReadiness();
     }
 

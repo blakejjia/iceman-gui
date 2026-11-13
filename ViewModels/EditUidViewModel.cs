@@ -110,8 +110,6 @@ public partial class EditUidViewModel : ObservableObject
         : CardSupported ? "UID writable"
         : "UID not writable";
 
-    public Brush StatusBrush => WriteSucceeded ? Brushes.LimeGreen : WriteFailed ? Brushes.LightCoral : Brushes.Gray;
-
     partial void OnTargetTagChanged(TagInfo? value) => NotifyGateStates();
     partial void OnIsReadingTargetChanged(bool value) => NotifyGateStates();
     partial void OnIsWritingChanged(bool value) => NotifyGateStates();
@@ -127,17 +125,9 @@ public partial class EditUidViewModel : ObservableObject
         NotifyGateStates();
     }
 
-    partial void OnWriteSucceededChanged(bool value)
-    {
-        OnPropertyChanged(nameof(StatusBrush));
-        NotifyReadiness();
-    }
+    partial void OnWriteSucceededChanged(bool value) => NotifyReadiness();
 
-    partial void OnWriteFailedChanged(bool value)
-    {
-        OnPropertyChanged(nameof(StatusBrush));
-        NotifyReadiness();
-    }
+    partial void OnWriteFailedChanged(bool value) => NotifyReadiness();
 
     [RelayCommand]
     public async Task ReadTargetAsync()

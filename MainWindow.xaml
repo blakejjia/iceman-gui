@@ -78,8 +78,8 @@
                     <ui:NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <ui:TextBlock Text="Device" VerticalAlignment="Center" />
-                            <Border Background="#14351F"
-                                    BorderBrush="#22C55E"
+                            <Border Background="{DynamicResource SystemFillColorSuccessBackgroundBrush}"
+                                    BorderBrush="{DynamicResource SystemFillColorSuccessBrush}"
                                     BorderThickness="1"
                                     CornerRadius="8"
                                     Padding="6,1"
@@ -89,10 +89,10 @@
                                     Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <ui:SymbolIcon Symbol="CheckmarkCircle16" FontSize="11"
-                                                   Foreground="#4ADE80" Margin="0,0,4,0"
+                                                   Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,4,0"
                                                    VerticalAlignment="Center" />
                                     <ui:TextBlock Text="Connected" FontSize="10"
-                                                  Foreground="#4ADE80" FontWeight="SemiBold"
+                                                  Foreground="{DynamicResource SystemFillColorSuccessBrush}" FontWeight="SemiBold"
                                                   VerticalAlignment="Center" />
                                 </StackPanel>
                             </Border>
@@ -203,7 +203,18 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" Margin="0,0,8,0" />
+                    <Ellipse Width="10" Height="10" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
                     <ui:TextBlock Text="{Binding ActivePort, StringFormat='Port: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="•" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="Iceman/master RRG" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />

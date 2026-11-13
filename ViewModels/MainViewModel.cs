@@ -43,13 +43,9 @@ public partial class MainViewModel : ObservableObject
 
     public double DeviceUiOpacity => IsConnected ? 1.0 : 0.35;
 
-    public System.Windows.Media.Brush ConnectionBrush =>
-        IsConnected ? System.Windows.Media.Brushes.LimeGreen : System.Windows.Media.Brushes.Red;
-
     partial void OnIsConnectedChanged(bool value)
     {
         OnPropertyChanged(nameof(DeviceUiOpacity));
-        OnPropertyChanged(nameof(ConnectionBrush));
     }
 
     partial void OnSelectedPageTagChanged(string value)
