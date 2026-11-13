@@ -90,15 +90,27 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
-                <!-- Write wizard -->
+                <!-- Full-card write wizard -->
                 <ui:NavigationViewItem x:Name="NavWrite"
-                                       Content="Write Card"
+                                       Content="Edit Full Card"
                                        Tag="write"
                                        Click="OnNavClick"
                                        IsEnabled="{Binding IsConnected}"
                                        Opacity="{Binding DeviceUiOpacity}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Save24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- UID-only editor -->
+                <ui:NavigationViewItem x:Name="NavEditUid"
+                                       Content="Edit UID"
+                                       Tag="edituid"
+                                       Click="OnNavClick"
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Edit24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
@@ -109,16 +121,6 @@
                                        Click="OnNavClick">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="FolderOpen24" />
-                    </ui:NavigationViewItem.Icon>
-                </ui:NavigationViewItem>
-
-                <!-- Key files -->
-                <ui:NavigationViewItem x:Name="NavKeys"
-                                       Content="Keys"
-                                       Tag="keys"
-                                       Click="OnNavClick">
-                    <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Symbol="Key24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
@@ -155,22 +157,22 @@
                         <views:TagScannerPage DataContext="{Binding TagScanner}" />
                     </Border>
 
-                    <!-- Write Wizard Page -->
+                    <!-- Edit Full Card Page -->
                     <Border Style="{StaticResource FluentEntranceStyle}"
                             Visibility="{Binding IsWriteActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:WritePage DataContext="{Binding Write}" />
+                    </Border>
+
+                    <!-- Edit UID Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsEditUidActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:EditUidPage DataContext="{Binding EditUid}" />
                     </Border>
 
                     <!-- Card Library Page -->
                     <Border Style="{StaticResource FluentEntranceStyle}"
                             Visibility="{Binding IsLibraryActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:LibraryPage DataContext="{Binding Library}" />
-                    </Border>
-
-                    <!-- Keys Page -->
-                    <Border Style="{StaticResource FluentEntranceStyle}"
-                            Visibility="{Binding IsKeysActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <views:KeysPage DataContext="{Binding Keys}" />
                     </Border>
 
                 </Grid>
@@ -181,7 +183,7 @@
         <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="10" Height="10" Fill="LimeGreen" Margin="0,0,8,0" />
+                    <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="{Binding ActivePort, StringFormat='Port: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="•" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="Iceman/master RRG" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />

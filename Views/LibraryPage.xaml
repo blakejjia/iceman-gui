@@ -195,7 +195,7 @@
                         </Border>
 
                         <StackPanel Orientation="Horizontal">
-                            <ui:Button Content="Write to card" Appearance="Primary"
+                            <ui:Button Content="Edit full card" Appearance="Primary"
                                        Icon="{ui:SymbolIcon Save24}"
                                        Command="{Binding WriteToCardCommand}" Margin="0,0,8,0" />
                             <ui:Button Content="Open JSON" Icon="{ui:SymbolIcon DocumentText24}"

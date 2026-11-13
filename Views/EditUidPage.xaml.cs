@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace iceman_gui.Views;
 
-public partial class KeysPage : UserControl
+public partial class EditUidPage : UserControl
 {
-    public KeysPage()
+    public EditUidPage()
     {
         InitializeComponent();
     }

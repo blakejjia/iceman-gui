@@ -22,7 +22,7 @@ public partial class MainViewModel : ObservableObject
     private WriteViewModel _write = new();
 
     [ObservableProperty]
-    private KeysViewModel _keys = new();
+    private EditUidViewModel _editUid = new();
 
     public FlasherViewModel Flasher => Dashboard.Flasher;
 
@@ -39,13 +39,17 @@ public partial class MainViewModel : ObservableObject
     public bool IsScannerActive => SelectedPageTag == "scanner";
     public bool IsLibraryActive => SelectedPageTag == "library";
     public bool IsWriteActive => SelectedPageTag == "write";
-    public bool IsKeysActive => SelectedPageTag == "keys";
+    public bool IsEditUidActive => SelectedPageTag == "edituid";
 
     public double DeviceUiOpacity => IsConnected ? 1.0 : 0.35;
+
+    public System.Windows.Media.Brush ConnectionBrush =>
+        IsConnected ? System.Windows.Media.Brushes.LimeGreen : System.Windows.Media.Brushes.Red;
 
     partial void OnIsConnectedChanged(bool value)
     {
         OnPropertyChanged(nameof(DeviceUiOpacity));
+        OnPropertyChanged(nameof(ConnectionBrush));
     }
 
     partial void OnSelectedPageTagChanged(string value)
@@ -54,7 +58,7 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsScannerActive));
         OnPropertyChanged(nameof(IsLibraryActive));
         OnPropertyChanged(nameof(IsWriteActive));
-        OnPropertyChanged(nameof(IsKeysActive));
+        OnPropertyChanged(nameof(IsEditUidActive));
 
         if (value == "library")
         {
@@ -63,11 +67,6 @@ public partial class MainViewModel : ObservableObject
         else if (value == "write")
         {
             Write.RefreshSources();
-            Write.RefreshKeyFiles();
-        }
-        else if (value == "keys")
-        {
-            Keys.Refresh();
         }
     }
 

@@ -42,25 +42,6 @@ public partial class WriteViewModel : ObservableObject
     private string _targetKeyPath = string.Empty;
 
     [ObservableProperty]
-    private ObservableCollection<KeyFileEntry> _keyFiles = new();
-
-    [ObservableProperty]
-    private KeyFileEntry? _selectedKeyFile;
-
-    partial void OnSelectedKeyFileChanged(KeyFileEntry? value)
-    {
-        if (value == null)
-        {
-            return;
-        }
-
-        TargetKeyPath = value.Path;
-        DefaultKeysOk = false;
-        KeyStatus = $"Using key file {value.Name}.";
-        NotifyGateStates();
-    }
-
-    [ObservableProperty]
     private bool _writeUid = true;
 
     [ObservableProperty]
@@ -86,6 +67,41 @@ public partial class WriteViewModel : ObservableObject
 
     [ObservableProperty]
     private string _verifyStatus = string.Empty;
+
+    public ObservableCollection<WizardStep> Steps { get; } = new();
+
+    [ObservableProperty]
+    private int _currentStep = 1;
+
+    public WriteViewModel()
+    {
+        Steps.Add(new WizardStep(1, "Choose backup"));
+        Steps.Add(new WizardStep(2, "Read target"));
+        Steps.Add(new WizardStep(3, "Keys"));
+        Steps.Add(new WizardStep(4, "Write"));
+        Steps[^1].IsNotLast = false;
+        UpdateSteps();
+    }
+
+    public bool IsStep1Visible => CurrentStep == 1;
+    public bool IsStep2Visible => CurrentStep == 2;
+    public bool IsStep3Visible => CurrentStep == 3;
+    public bool IsStep4Visible => CurrentStep == 4;
+    public bool ShowContinue => CurrentStep < Steps.Count;
+    public bool CanGoBack => CurrentStep > 1;
+    public bool KeysReady => TargetTag != null
+                             && (TargetCapabilities.Magic == MagicWriteMode.Gen1a
+                                 || DefaultKeysOk
+                                 || TargetKeyPath.Length > 0);
+    public bool CanGoNext => CurrentStep switch
+    {
+        1 => SelectedSource != null,
+        2 => TargetTag != null,
+        3 => KeysReady,
+        _ => false
+    };
+
+    partial void OnCurrentStepChanged(int value) => UpdateSteps();
 
     public bool HasNoSources => Sources.Count == 0;
 
@@ -127,14 +143,6 @@ public partial class WriteViewModel : ObservableObject
         SelectedSource = Sources.FirstOrDefault(entry => entry.Uid == uid) ?? Sources.FirstOrDefault();
     }
 
-    public void RefreshKeyFiles()
-    {
-        string? path = SelectedKeyFile?.Path;
-        KeyFiles = new ObservableCollection<KeyFileEntry>(
-            KeyLibrary.List().Where(entry => entry.Kind == KeyFileKind.Bin));
-        SelectedKeyFile = KeyFiles.FirstOrDefault(entry => entry.Path == path);
-    }
-
     public void SelectSource(DumpEntry entry)
     {
         RefreshSources(entry);
@@ -142,6 +150,38 @@ public partial class WriteViewModel : ObservableObject
 
     [RelayCommand]
     public void RefreshList() => RefreshSources();
+
+    [RelayCommand]
+    public void GoToStep(WizardStep? step)
+    {
+        if (step == null)
+        {
+            return;
+        }
+
+        if (step.Number <= CurrentStep || step.CanGo)
+        {
+            CurrentStep = step.Number;
+        }
+    }
+
+    [RelayCommand]
+    public void NextStep()
+    {
+        if (CanGoNext && CurrentStep < Steps.Count)
+        {
+            CurrentStep++;
+        }
+    }
+
+    [RelayCommand]
+    public void PreviousStep()
+    {
+        if (CurrentStep > 1)
+        {
+            CurrentStep--;
+        }
+    }
 
     [RelayCommand]
     public async Task ReadTargetAsync()
@@ -189,13 +229,6 @@ public partial class WriteViewModel : ObservableObject
             }
 
             WriteUid = TargetCapabilities.CanChangeUid;
-
-            if (SelectedKeyFile != null && TargetCapabilities.Magic != MagicWriteMode.Gen1a)
-            {
-                TargetKeyPath = SelectedKeyFile.Path;
-                DefaultKeysOk = false;
-                KeyStatus = $"Using key file {SelectedKeyFile.Name}.";
-            }
         }
         catch (Exception ex)
         {
@@ -220,7 +253,6 @@ public partial class WriteViewModel : ObservableObject
         IsCheckingKeys = true;
         DefaultKeysOk = false;
         TargetKeyPath = string.Empty;
-        SelectedKeyFile = null;
         KeyStatus = "Checking the default key on all sectors...";
 
         try
@@ -250,7 +282,6 @@ public partial class WriteViewModel : ObservableObject
         }
 
         IsCheckingKeys = true;
-        SelectedKeyFile = null;
         KeyStatus = "Finding the target keys (autopwn)...";
 
         try
@@ -405,5 +436,38 @@ public partial class WriteViewModel : ObservableObject
         OnPropertyChanged(nameof(CanFindKeys));
         OnPropertyChanged(nameof(CanWriteUid));
         OnPropertyChanged(nameof(CanWrite));
+        UpdateSteps();
+    }
+
+    private void UpdateSteps()
+    {
+        if (Steps.Count == 0)
+        {
+            return;
+        }
+
+        bool keysReady = KeysReady;
+        foreach (WizardStep step in Steps)
+        {
+            step.IsActive = step.Number == CurrentStep;
+            step.IsDone = step.Number < CurrentStep;
+            step.CanGo = step.Number switch
+            {
+                1 => true,
+                2 => SelectedSource != null,
+                3 => TargetTag != null,
+                4 => keysReady,
+                _ => false
+            };
+        }
+
+        OnPropertyChanged(nameof(IsStep1Visible));
+        OnPropertyChanged(nameof(IsStep2Visible));
+        OnPropertyChanged(nameof(IsStep3Visible));
+        OnPropertyChanged(nameof(IsStep4Visible));
+        OnPropertyChanged(nameof(ShowContinue));
+        OnPropertyChanged(nameof(CanGoBack));
+        OnPropertyChanged(nameof(CanGoNext));
+        OnPropertyChanged(nameof(KeysReady));
     }
 }

@@ -1,11 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using iceman_gui.Core;
@@ -21,85 +18,27 @@ public partial class TagScannerViewModel : ObservableObject
 
     public bool HasCurrentTag => CurrentTag != null && (!string.IsNullOrEmpty(CurrentTag.Uid) || !string.IsNullOrEmpty(CurrentTag.CardNumber));
     public bool HasNoTag => !HasCurrentTag;
-    public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
-    public bool CannotWriteUid => HasCurrentTag && !CanWriteUid;
 
     public CardCapabilities Capabilities => CardCapabilities.For(CurrentTag);
     public bool CanBackup => CurrentTag != null && Capabilities.CanBackup && !IsBackingUp;
     public bool CannotBackup => HasCurrentTag && (!Capabilities.CanBackup || IsBackingUp);
     public string BackupHint => CurrentTag == null ? "Scan a card first." : Capabilities.Summary;
 
-    public string DetectedMagicModeText
-    {
-        get
-        {
-            if (CurrentTag == null) return "Unknown";
-            if (CurrentTag.IsGen1a) return "Gen 1a (Magic Backdoor Unlock)";
-            if (CurrentTag.IsGen2Cuid) return "Gen 2 / CUID (Direct Block 0 Write)";
-            return !string.IsNullOrWhiteSpace(CurrentTag.MagicType)
-                ? $"{CurrentTag.MagicType} (Direct Block 0 Write)"
-                : "Gen 2 / CUID (Direct Block 0 Write)";
-        }
-    }
-
     partial void OnCurrentTagChanged(TagInfo? value)
     {
         OnPropertyChanged(nameof(HasCurrentTag));
         OnPropertyChanged(nameof(HasNoTag));
-        OnPropertyChanged(nameof(CanWriteUid));
-        OnPropertyChanged(nameof(CannotWriteUid));
-        OnPropertyChanged(nameof(DetectedMagicModeText));
         OnPropertyChanged(nameof(Capabilities));
         OnPropertyChanged(nameof(CanBackup));
         OnPropertyChanged(nameof(CannotBackup));
         OnPropertyChanged(nameof(BackupHint));
 
-        DumpEntry? existing = value == null ? null : DumpLibrary.Get(value.Uid);
-        BackupAlias = value == null
-            ? string.Empty
-            : (existing?.Alias ?? DumpLibrary.SuggestAlias(value));
         BackupStatus = string.Empty;
         HasBackupStatus = false;
         HasBackupEntry = false;
-    }
-
-    [ObservableProperty]
-    private bool _isWritingUidDialogOpen;
-
-    [ObservableProperty]
-    private string _writeUidInput = string.Empty;
-
-    [ObservableProperty]
-    private bool _isWritingUid;
-
-    public bool IsNotWritingUid => !IsWritingUid;
-
-    partial void OnIsWritingUidChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsNotWritingUid));
-    }
-
-    [ObservableProperty]
-    private string _writeUidResult = string.Empty;
-
-    [ObservableProperty]
-    private bool _hasWriteUidResult;
-
-    [ObservableProperty]
-    private bool _isWriteUidSuccess;
-
-    [ObservableProperty]
-    private string _writeUidButtonText = "Write UID";
-
-    public bool CanCancelWriteUid => !IsWriteUidSuccess;
-
-    public Brush WriteUidResultBrush => IsWriteUidSuccess ? Brushes.LimeGreen : Brushes.LightCoral;
-
-    partial void OnIsWriteUidSuccessChanged(bool value)
-    {
-        OnPropertyChanged(nameof(WriteUidResultBrush));
-        OnPropertyChanged(nameof(CanCancelWriteUid));
-        WriteUidButtonText = value ? "Finish" : "Write UID";
+        IsNamingBackup = false;
+        BackupNameInput = string.Empty;
+        _pendingBackupEntry = null;
     }
 
     [ObservableProperty]
@@ -109,9 +48,6 @@ public partial class TagScannerViewModel : ObservableObject
     private bool _isBackingUp;
 
     [ObservableProperty]
-    private string _backupAlias = string.Empty;
-
-    [ObservableProperty]
     private string _backupStatus = string.Empty;
 
     [ObservableProperty]
@@ -119,6 +55,21 @@ public partial class TagScannerViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasBackupEntry;
+
+    [ObservableProperty]
+    private bool _isNamingBackup;
+
+    [ObservableProperty]
+    private string _backupNameInput = string.Empty;
+
+    private DumpEntry? _pendingBackupEntry;
+
+    public bool CanSaveBackupName => !string.IsNullOrWhiteSpace(BackupNameInput);
+
+    partial void OnBackupNameInputChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanSaveBackupName));
+    }
 
     partial void OnIsBackingUpChanged(bool value)
     {
@@ -179,90 +130,6 @@ public partial class TagScannerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void OpenWriteUidDialog()
-    {
-        if (CurrentTag == null || !CanWriteUid) return;
-
-        WriteUidInput = CurrentTag.Uid;
-        WriteUidResult = string.Empty;
-        HasWriteUidResult = false;
-        IsWriteUidSuccess = false;
-        WriteUidButtonText = "Write UID";
-        OnPropertyChanged(nameof(DetectedMagicModeText));
-        IsWritingUidDialogOpen = true;
-    }
-
-    [RelayCommand]
-    public void CloseWriteUidDialog()
-    {
-        IsWritingUidDialogOpen = false;
-    }
-
-    [RelayCommand]
-    public void GenerateRandomUid()
-    {
-        byte[] bytes = new byte[4];
-        RandomNumberGenerator.Fill(bytes);
-        WriteUidInput = Convert.ToHexString(bytes);
-    }
-
-    [RelayCommand]
-    public async Task ExecuteWriteUidAsync()
-    {
-        if (IsWriteUidSuccess)
-        {
-            CloseWriteUidDialog();
-            return;
-        }
-
-        if (CurrentTag == null || !CanWriteUid) return;
-
-        string cleanHex = WriteUidInput.Replace(" ", "").Replace(":", "").Trim().ToUpperInvariant();
-        if (cleanHex.Length != 8 || !Regex.IsMatch(cleanHex, @"^[0-9A-Fa-f]{8}$"))
-        {
-            WriteUidResult = "UID must be exactly 4 bytes (8 hex characters), e.g. 11223344.";
-            HasWriteUidResult = true;
-            IsWriteUidSuccess = false;
-            OnPropertyChanged(nameof(WriteUidResultBrush));
-            return;
-        }
-
-        bool isGen1a = CurrentTag.IsGen1a;
-        bool isGen2Cuid = !isGen1a;
-
-        IsWritingUid = true;
-        WriteUidResult = $"Writing UID [{cleanHex}] via {(isGen2Cuid ? "Gen 2 CUID direct write" : "Gen 1a magic backdoor")}...";
-        HasWriteUidResult = true;
-        IsWriteUidSuccess = false;
-        OnPropertyChanged(nameof(WriteUidResultBrush));
-
-        try
-        {
-            var (success, message) = await MifareService.Instance.ChangeUidAsync(cleanHex, isGen2Cuid: isGen2Cuid);
-            WriteUidResult = message;
-            IsWriteUidSuccess = success;
-            OnPropertyChanged(nameof(WriteUidResultBrush));
-
-            if (success)
-            {
-                CurrentTag.Uid = cleanHex;
-                CurrentTag.FormattedUid = string.Join(" ", Enumerable.Range(0, 4).Select(i => cleanHex.Substring(i * 2, 2)));
-                OnPropertyChanged(nameof(CurrentTag));
-            }
-        }
-        catch (Exception ex)
-        {
-            WriteUidResult = $"Write error: {ex.Message}";
-            IsWriteUidSuccess = false;
-            OnPropertyChanged(nameof(WriteUidResultBrush));
-        }
-        finally
-        {
-            IsWritingUid = false;
-        }
-    }
-
-    [RelayCommand]
     public async Task BackupCardAsync()
     {
         if (CurrentTag == null || !CanBackup)
@@ -278,7 +145,7 @@ public partial class TagScannerViewModel : ObservableObject
         try
         {
             var progress = new Progress<string>(stage => BackupStatus = stage);
-            var (result, entry) = await MifareService.Instance.BackupCardAsync(CurrentTag, BackupAlias, progress);
+            var (result, entry) = await MifareService.Instance.BackupCardAsync(CurrentTag, null, progress);
 
             if (!result.Success)
             {
@@ -299,7 +166,10 @@ public partial class TagScannerViewModel : ObservableObject
                 return;
             }
 
-            BackupStatus = $"Saved \"{entry.Alias}\" to your card library.";
+            _pendingBackupEntry = entry;
+            BackupNameInput = entry.Alias;
+            IsNamingBackup = true;
+            BackupStatus = "Backup saved. Give it a name.";
             HasBackupEntry = true;
         }
         catch (Exception ex)
@@ -310,6 +180,43 @@ public partial class TagScannerViewModel : ObservableObject
         {
             IsBackingUp = false;
         }
+    }
+
+    [RelayCommand]
+    public void SaveBackupName()
+    {
+        if (_pendingBackupEntry != null)
+        {
+            string alias = BackupNameInput.Trim();
+            if (alias.Length > 0)
+            {
+                DumpLibrary.SetAlias(_pendingBackupEntry.Uid, alias);
+                BackupStatus = $"Saved \"{alias}\" to your card library.";
+            }
+            else
+            {
+                BackupStatus = $"Saved \"{_pendingBackupEntry.Alias}\" to your card library.";
+            }
+        }
+
+        CloseNamingDialog();
+    }
+
+    [RelayCommand]
+    public void SkipBackupName()
+    {
+        if (_pendingBackupEntry != null)
+        {
+            BackupStatus = $"Saved \"{_pendingBackupEntry.Alias}\" to your card library.";
+        }
+
+        CloseNamingDialog();
+    }
+
+    private void CloseNamingDialog()
+    {
+        IsNamingBackup = false;
+        _pendingBackupEntry = null;
     }
 
     [RelayCommand]

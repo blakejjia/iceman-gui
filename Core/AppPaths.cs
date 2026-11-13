@@ -16,7 +16,6 @@ public static class AppPaths
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "iceman-gui");
 
     public static string DumpsDirectory => Path.Combine(DocumentsDirectory, "dumps");
-    public static string KeysDirectory => Path.Combine(AppDataDirectory, "keys");
     public static string ClientHome => Path.Combine(AppDataDirectory, "client-home");
     public static string LibraryFile => Path.Combine(AppDataDirectory, "library.json");
     public static string SettingsFile => Path.Combine(AppDataDirectory, "settings.json");
@@ -26,7 +25,6 @@ public static class AppPaths
         Directory.CreateDirectory(AppDataDirectory);
         Directory.CreateDirectory(DocumentsDirectory);
         Directory.CreateDirectory(DumpsDirectory);
-        Directory.CreateDirectory(KeysDirectory);
         Directory.CreateDirectory(ClientHome);
     }
 

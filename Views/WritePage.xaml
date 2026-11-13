@@ -6,158 +6,258 @@
         <StackPanel Margin="24">
             <!-- Header -->
             <StackPanel Margin="0,0,0,20">
-                <ui:TextBlock Text="Write Card" FontTypography="Title" />
-                <ui:TextBlock Text="Copy a saved backup onto a target card. Each step unlocks the next."
+                <ui:TextBlock Text="Edit Full Card" FontTypography="Title" />
+                <ui:TextBlock Text="Write a full backup onto a target card. Each step unlocks the next."
                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                               Margin="0,4,0,0" />
             </StackPanel>
 
-            <!-- Step 1: source -->
-            <ui:Card Margin="0,0,0,16">
-                <StackPanel>
-                    <Grid Margin="0,0,0,10">
-                        <ui:TextBlock Text="1 · Choose a backup" FontTypography="Subtitle" />
-                        <ui:Button HorizontalAlignment="Right"
-                                   Content="Refresh"
-                                   Icon="{ui:SymbolIcon ArrowClockwise24}"
-                                   Command="{Binding RefreshListCommand}" />
-                    </Grid>
-
-                    <ComboBox ItemsSource="{Binding Sources}"
-                              SelectedItem="{Binding SelectedSource, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,10,0" />
-                                    <ui:TextBlock Text="{Binding Uid}" FontFamily="Consolas"
-                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <!-- Stepper -->
+            <ItemsControl ItemsSource="{Binding Steps}" HorizontalAlignment="Center" Margin="0,0,0,20">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Command="{Binding DataContext.GoToStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    IsEnabled="{Binding CanGo}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="4,2">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="26" Height="26" CornerRadius="13">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorSecondaryBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                        <Setter Property="Background" Value="#16A34A" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Glyph}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                            <Setter Property="Foreground" Value="White" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                            <Setter Property="Foreground" Value="White" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    <TextBlock Text="{Binding Title}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                            </Button>
+                            <Border Width="42" Height="1" Margin="8,0"
+                                    Background="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding IsNotLast, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-                    <ui:TextBlock Text="No backups yet. Use Read Card to create one first."
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  FontSize="12"
-                                  Margin="0,8,0,0"
-                                  Visibility="{Binding HasNoSources, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                </StackPanel>
-            </ui:Card>
+            <!-- Focused step -->
+            <Grid>
+                <!-- Step 1 -->
+                <Border Style="{StaticResource FluentEntranceStyle}"
+                        Visibility="{Binding IsStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:Card>
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <ui:TextBlock Text="Choose a backup" FontTypography="Subtitle" />
+                                <ui:Button HorizontalAlignment="Right"
+                                           Content="Refresh"
+                                           Icon="{ui:SymbolIcon ArrowClockwise24}"
+                                           Command="{Binding RefreshListCommand}" />
+                            </Grid>
 
-            <!-- Step 2: target -->
-            <ui:Card Margin="0,0,0,16">
-                <StackPanel>
-                    <ui:TextBlock Text="2 · Read the target card" FontTypography="Subtitle" Margin="0,0,0,10" />
+                            <ComboBox ItemsSource="{Binding Sources}"
+                                      SelectedItem="{Binding SelectedSource, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,10,0" />
+                                            <ui:TextBlock Text="{Binding Uid}" FontFamily="Consolas"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <ui:Button Content="Read target card"
-                                   Appearance="Primary"
-                                   Icon="{ui:SymbolIcon Scan24}"
-                                   Command="{Binding ReadTargetCommand}"
-                                   IsEnabled="{Binding CanReadTarget}"
-                                   Margin="0,0,12,0" />
-                        <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                         Visibility="{Binding IsReadingTarget, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         VerticalAlignment="Center" />
-                    </StackPanel>
+                            <ui:TextBlock Text="No backups yet. Use Read Card to create one first."
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          FontSize="12"
+                                          Margin="0,8,0,0"
+                                          Visibility="{Binding HasNoSources, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                    </ui:Card>
+                </Border>
 
-                    <ui:TextBlock Text="{Binding TargetStatus}"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  TextWrapping="Wrap" />
-                </StackPanel>
-            </ui:Card>
+                <!-- Step 2 -->
+                <Border Style="{StaticResource FluentEntranceStyle}"
+                        Visibility="{Binding IsStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:Card>
+                        <StackPanel>
+                            <ui:TextBlock Text="Read the target card" FontTypography="Subtitle" Margin="0,0,0,10" />
 
-            <!-- Step 3: keys -->
-            <ui:Card Margin="0,0,0,16">
-                <StackPanel>
-                    <ui:TextBlock Text="3 · Target keys" FontTypography="Subtitle" Margin="0,0,0,10" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <ui:Button Content="Read target card"
+                                           Appearance="Primary"
+                                           Icon="{ui:SymbolIcon Scan24}"
+                                           Command="{Binding ReadTargetCommand}"
+                                           IsEnabled="{Binding CanReadTarget}"
+                                           Margin="0,0,12,0" />
+                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
+                                                 Visibility="{Binding IsReadingTarget, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 VerticalAlignment="Center" />
+                            </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <ui:Button Content="Check default keys"
-                                   Icon="{ui:SymbolIcon Key24}"
-                                   Command="{Binding CheckKeysCommand}"
-                                   IsEnabled="{Binding CanCheckKeys}"
-                                   Margin="0,0,12,0" />
-                        <ui:Button Content="Find keys (autopwn)"
-                                   Icon="{ui:SymbolIcon Search24}"
-                                   Command="{Binding FindKeysCommand}"
-                                   IsEnabled="{Binding CanFindKeys}"
-                                   Margin="0,0,12,0" />
-                        <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                         Visibility="{Binding IsCheckingKeys, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         VerticalAlignment="Center" />
-                    </StackPanel>
+                            <ui:TextBlock Text="{Binding TargetStatus}"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap" />
+                        </StackPanel>
+                    </ui:Card>
+                </Border>
 
-                    <ui:TextBlock Text="Autopwn reads the target card to recover its keys and keeps a backup of it. It can take a few minutes on locked cards."
-                                  Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                  FontSize="11"
-                                  TextWrapping="Wrap"
-                                  Margin="0,0,0,8" />
+                <!-- Step 3 -->
+                <Border Style="{StaticResource FluentEntranceStyle}"
+                        Visibility="{Binding IsStep3Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:Card>
+                        <StackPanel>
+                            <ui:TextBlock Text="Target keys" FontTypography="Subtitle" Margin="0,0,0,10" />
 
-                    <ui:TextBlock Text="{Binding KeyStatus}"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <ui:Button Content="Check default keys"
+                                           Icon="{ui:SymbolIcon Key24}"
+                                           Command="{Binding CheckKeysCommand}"
+                                           IsEnabled="{Binding CanCheckKeys}"
+                                           Margin="0,0,12,0" />
+                                <ui:Button Content="Find keys (autopwn)"
+                                           Icon="{ui:SymbolIcon Search24}"
+                                           Command="{Binding FindKeysCommand}"
+                                           IsEnabled="{Binding CanFindKeys}"
+                                           Margin="0,0,12,0" />
+                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
+                                                 Visibility="{Binding IsCheckingKeys, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 VerticalAlignment="Center" />
+                            </StackPanel>
 
-                    <ui:TextBlock Text="Or use a saved key file:"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  FontSize="12"
-                                  Margin="0,12,0,4" />
-                    <ComboBox ItemsSource="{Binding KeyFiles}"
-                              SelectedItem="{Binding SelectedKeyFile, Mode=TwoWay}"
-                              DisplayMemberPath="Name" />
-                </StackPanel>
-            </ui:Card>
+                            <ui:TextBlock Text="Autopwn reads the target card to recover its keys and keeps a backup of it. It can take a few minutes on locked cards."
+                                          Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                          FontSize="11"
+                                          TextWrapping="Wrap"
+                                          Margin="0,0,0,8" />
 
-            <!-- Step 4: write -->
-            <ui:Card Margin="0,0,0,16">
-                <StackPanel>
-                    <ui:TextBlock Text="4 · Write" FontTypography="Subtitle" Margin="0,0,0,10" />
+                            <ui:TextBlock Text="{Binding KeyStatus}"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap" />
+                        </StackPanel>
+                    </ui:Card>
+                </Border>
 
-                    <CheckBox Content="Also write the source UID (full clone)"
-                              IsChecked="{Binding WriteUid, Mode=TwoWay}"
-                              IsEnabled="{Binding CanWriteUid}"
-                              Margin="0,0,0,10" />
+                <!-- Step 4 -->
+                <Border Style="{StaticResource FluentEntranceStyle}"
+                        Visibility="{Binding IsStep4Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:Card>
+                        <StackPanel>
+                            <ui:TextBlock Text="Write" FontTypography="Subtitle" Margin="0,0,0,10" />
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <ui:Button Content="Write to card"
-                                   Appearance="Primary"
-                                   Icon="{ui:SymbolIcon Save24}"
-                                   Command="{Binding WriteCommand}"
-                                   IsEnabled="{Binding CanWrite}"
-                                   Margin="0,0,12,0" />
-                        <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
-                                         Visibility="{Binding IsWriting, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                         VerticalAlignment="Center" />
-                    </StackPanel>
+                            <CheckBox Content="Also write the source UID (full clone)"
+                                      IsChecked="{Binding WriteUid, Mode=TwoWay}"
+                                      IsEnabled="{Binding CanWriteUid}"
+                                      Margin="0,0,0,10" />
 
-                    <ui:TextBlock Text="{Binding WriteStatus}"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <ui:Button Content="Write full card"
+                                           Appearance="Primary"
+                                           Icon="{ui:SymbolIcon Save24}"
+                                           Command="{Binding WriteCommand}"
+                                           IsEnabled="{Binding CanWrite}"
+                                           Margin="0,0,12,0" />
+                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True"
+                                                 Visibility="{Binding IsWriting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 VerticalAlignment="Center" />
+                            </StackPanel>
 
-                    <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
-                            CornerRadius="6"
-                            Padding="10,8"
-                            Margin="0,10,0,0"
-                            Visibility="{Binding HasWriteLog, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding WriteLog}"
-                                   FontFamily="Consolas"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"
-                                   MaxHeight="140" />
-                    </Border>
-                </StackPanel>
-            </ui:Card>
+                            <ui:TextBlock Text="{Binding WriteStatus}"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap" />
 
-            <!-- Step 5: verify -->
-            <ui:Card Visibility="{Binding HasVerifyResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel>
-                    <ui:TextBlock Text="5 · Verification" FontTypography="Subtitle" Margin="0,0,0,10" />
-                    <ui:TextBlock Text="{Binding VerifyStatus}"
-                                  Foreground="{Binding VerifyBrush}"
-                                  FontWeight="SemiBold"
-                                  TextWrapping="Wrap" />
-                </StackPanel>
-            </ui:Card>
+                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="6"
+                                    Padding="10,8"
+                                    Margin="0,10,0,0"
+                                    Visibility="{Binding HasWriteLog, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding WriteLog}"
+                                           FontFamily="Consolas"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           MaxHeight="140" />
+                            </Border>
+
+                            <StackPanel Margin="0,12,0,0"
+                                        Visibility="{Binding HasVerifyResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ui:TextBlock Text="Verification" FontTypography="BodyStrong" Margin="0,0,0,4" />
+                                <ui:TextBlock Text="{Binding VerifyStatus}"
+                                              Foreground="{Binding VerifyBrush}"
+                                              FontWeight="SemiBold"
+                                              TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ui:Card>
+                </Border>
+            </Grid>
+
+            <!-- Navigation -->
+            <Grid Margin="0,16,0,0">
+                <ui:Button Content="Back"
+                           Icon="{ui:SymbolIcon ArrowLeft24}"
+                           Appearance="Transparent"
+                           Command="{Binding PreviousStepCommand}"
+                           IsEnabled="{Binding CanGoBack}"
+                           HorizontalAlignment="Left"
+                           Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <ui:Button Content="Continue"
+                           Appearance="Primary"
+                           Icon="{ui:SymbolIcon ArrowRight24}"
+                           Command="{Binding NextStepCommand}"
+                           IsEnabled="{Binding CanGoNext}"
+                           HorizontalAlignment="Right"
+                           Visibility="{Binding ShowContinue, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
