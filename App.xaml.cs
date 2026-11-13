@@ -16,6 +16,19 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        var environment = Pm3EnvironmentResolver.Instance;
+        environment.Resolve();
+        AppPaths.EnsureCreated();
+        if (environment.IsResolved)
+        {
+            AppPaths.MigrateLegacyDumps(System.IO.Path.Combine(environment.RootDirectory, "dumps"));
+        }
+
+        ClientHome.EnsureSeeded(
+            environment.IsResolved
+                ? System.IO.Path.Combine(environment.ClientDirectory, ".proxmark3", "preferences.json")
+                : null);
+
         bool isHandlingException = false;
         DispatcherUnhandledException += (s, args) =>
         {

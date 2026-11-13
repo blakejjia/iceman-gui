@@ -24,39 +24,44 @@ public class FlasherService
 
     public async Task<string> FlashDeviceAsync(string port, bool flashBootloader, CancellationToken ct = default)
     {
-        var env = Pm3EnvironmentResolver.Instance;
-        if (!env.IsResolved) env.Resolve();
-
-        var (hasBoot, hasFull, bootPath, fullPath) = CheckFirmwareFiles();
-        if (!hasFull)
+        // Flashing needs the COM port to itself: hold the session gate, which
+        // also stops the interactive client and blocks queued commands.
+        return await Pm3ProcessService.Instance.RunExclusiveAsync(async () =>
         {
-            return "[!] Error: fullimage.elf not found in " + env.ClientDirectory;
-        }
+            var env = Pm3EnvironmentResolver.Instance;
+            if (!env.IsResolved) env.Resolve();
 
-        string bootArg = flashBootloader && hasBoot ? "--unlock-bootloader --image bootrom.elf " : "";
-        string args = $"{port} --flash {bootArg}--image fullimage.elf";
+            var (hasBoot, hasFull, bootPath, fullPath) = CheckFirmwareFiles();
+            if (!hasFull)
+            {
+                return "[!] Error: fullimage.elf not found in " + env.ClientDirectory;
+            }
 
-        var proc = Pm3ProcessService.Instance;
-        var psi = proc.CreateBaseStartInfo(args);
+            string bootArg = flashBootloader && hasBoot ? "--unlock-bootloader --image bootrom.elf " : "";
+            string args = $"{port} --flash {bootArg}--image fullimage.elf";
 
-        using var process = new System.Diagnostics.Process { StartInfo = psi };
-        var sb = new System.Text.StringBuilder();
+            var proc = Pm3ProcessService.Instance;
+            var psi = proc.CreateBaseStartInfo(args);
 
-        process.OutputDataReceived += (s, e) =>
-        {
-            if (e.Data != null) sb.AppendLine(e.Data);
-        };
-        process.ErrorDataReceived += (s, e) =>
-        {
-            if (e.Data != null) sb.AppendLine(e.Data);
-        };
+            using var process = new System.Diagnostics.Process { StartInfo = psi };
+            var sb = new System.Text.StringBuilder();
 
-        process.Start();
-        ChildProcessTracker.AddProcess(process);
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (e.Data != null) sb.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (e.Data != null) sb.AppendLine(e.Data);
+            };
 
-        await process.WaitForExitAsync(ct);
-        return sb.ToString();
+            process.Start();
+            ChildProcessTracker.AddProcess(process);
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync(ct);
+            return sb.ToString();
+        }, ct);
     }
 }

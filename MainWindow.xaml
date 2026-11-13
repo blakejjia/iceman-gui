@@ -66,11 +66,11 @@
                 </Grid>
             </ui:NavigationView.PaneHeader>
 
-            <!-- Progressive Disclosure Menu Items -->
+            <!-- Menu Items -->
             <ui:NavigationView.MenuItems>
                 <!-- Dashboard (Always visible) -->
                 <ui:NavigationViewItem x:Name="NavDashboard"
-                                       Content="Dashboard"
+                                       Content="Device"
                                        Tag="dashboard"
                                        Click="OnNavClick">
                     <ui:NavigationViewItem.Icon>
@@ -78,14 +78,45 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
-                <!-- Tag Scanner (Visible once machine is connected) -->
+                <!-- Read Card (visible but greyed out until a device is connected) -->
                 <ui:NavigationViewItem x:Name="NavScanner"
-                                       Content="Tag Scanner"
+                                       Content="Read Card"
                                        Tag="scanner"
                                        Click="OnNavClick"
-                                       Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                       IsEnabled="{Binding IsConnected}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Search24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Write wizard -->
+                <ui:NavigationViewItem x:Name="NavWrite"
+                                       Content="Write Card"
+                                       Tag="write"
+                                       Click="OnNavClick"
+                                       IsEnabled="{Binding IsConnected}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Save24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Card Library (works offline) -->
+                <ui:NavigationViewItem x:Name="NavLibrary"
+                                       Content="Library"
+                                       Tag="library"
+                                       Click="OnNavClick">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="FolderOpen24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Key files -->
+                <ui:NavigationViewItem x:Name="NavKeys"
+                                       Content="Keys"
+                                       Tag="keys"
+                                       Click="OnNavClick">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Key24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
@@ -120,6 +151,24 @@
                     <Border Style="{StaticResource FluentEntranceStyle}"
                             Visibility="{Binding IsScannerActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <views:TagScannerPage DataContext="{Binding TagScanner}" />
+                    </Border>
+
+                    <!-- Write Wizard Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsWriteActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:WritePage DataContext="{Binding Write}" />
+                    </Border>
+
+                    <!-- Card Library Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsLibraryActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:LibraryPage DataContext="{Binding Library}" />
+                    </Border>
+
+                    <!-- Keys Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsKeysActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:KeysPage DataContext="{Binding Keys}" />
                     </Border>
 
                     <!-- Mifare Toolkit Page -->

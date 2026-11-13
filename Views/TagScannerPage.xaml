@@ -12,8 +12,8 @@
             <StackPanel Margin="24">
                 <!-- Header -->
                 <StackPanel Margin="0,0,0,20">
-                    <ui:TextBlock Text="Tag Scanner" FontTypography="Title" />
-                    <ui:TextBlock Text="Universal RFID &amp; NFC identification (LF 125 kHz &amp; HF 13.56 MHz across all makes and standards)." 
+                    <ui:TextBlock Text="Read Card" FontTypography="Title" />
+                    <ui:TextBlock Text="Identify a card, then back it up to your card library."
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
                 </StackPanel>
 
@@ -38,6 +38,63 @@
                     </Grid>
                 </ui:Card>
 
+                <!-- Backup Card -->
+                <ui:Card Margin="0,0,0,20"
+                         Visibility="{Binding HasCurrentTag, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Save24" FontSize="20"
+                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                               Margin="0,0,8,0" />
+                                <ui:TextBlock Text="Back up this card" FontTypography="Subtitle" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <ui:Button Grid.Column="1"
+                                       Content="Open Card Library"
+                                       Icon="{ui:SymbolIcon FolderOpen24}"
+                                       Command="{Binding OpenLibraryCommand}"
+                                       Visibility="{Binding HasBackupEntry, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
+
+                        <ui:TextBlock Text="{Binding BackupHint}"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Margin="0,0,0,10" />
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Text="{Binding BackupAlias, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="Name this backup (optional)"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,10,0" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Back up card"
+                                       Appearance="Primary"
+                                       Icon="{ui:SymbolIcon Save24}"
+                                       Command="{Binding BackupCardCommand}"
+                                       IsEnabled="{Binding CanBackup}" />
+                        </Grid>
+
+                        <StackPanel Visibility="{Binding HasBackupStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ProgressBar Height="4"
+                                         IsIndeterminate="{Binding IsBackingUp}"
+                                         Visibility="{Binding IsBackingUp, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                         Margin="0,0,0,6" />
+                            <ui:TextBlock Text="{Binding BackupStatus}"
+                                          TextWrapping="Wrap"
+                                          FontSize="12"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+
                 <!-- Detected Tag Profile Card -->
                 <ui:Card Margin="0,0,0,20">
                     <StackPanel>
@@ -47,14 +104,6 @@
                                 <ui:TextBlock Text="Detected Tag Profile" FontTypography="Subtitle" VerticalAlignment="Center" />
                             </StackPanel>
 
-                            <!-- Inline Block Editing (Advanced) Shortcut (popped directly in Profile when Mifare is found) -->
-                            <ui:Button HorizontalAlignment="Right"
-                                       Content="Block Editing (Advanced)" 
-                                       Appearance="Secondary" 
-                                       Icon="{ui:SymbolIcon DocumentEdit24}" 
-                                       Command="{Binding GoToMifareCommand}"
-                                       ToolTip="Inspect raw 16 sectors, check keys, dump, and write individual blocks"
-                                       Visibility="{Binding IsMifareCardDetected, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </Grid>
 
                         <!-- Empty State (No Card Detected on Antenna) -->
@@ -239,7 +288,7 @@
                       Visibility="{Binding IsShowingHistory, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Margin="24">
                 <!-- Navigation Back Button -->
-                <ui:Button Content="Back to Tag Scanner" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToScannerCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
+                <ui:Button Content="Back to Read Card" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToScannerCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
 
                 <!-- Sub-page Header -->
                 <Grid Margin="0,0,0,20">

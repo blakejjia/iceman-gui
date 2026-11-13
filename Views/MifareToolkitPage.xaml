@@ -5,44 +5,35 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
             <!-- Navigation Back Button -->
-            <ui:Button Content="Back to Tag Scanner" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackToScannerCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
+            <ui:Button Content="Back" Icon="{ui:SymbolIcon ArrowLeft24}" Appearance="Transparent" Command="{Binding BackCommand}" Margin="0,0,0,16" HorizontalAlignment="Left" />
 
             <!-- Header -->
             <StackPanel Margin="0,0,0,20">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:TextBlock Text="Block Editing (Advanced)" FontTypography="Title" />
-                    <Border Background="#2E2310" BorderBrush="#854D0E" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
-                        <ui:TextBlock Text="Advanced Tool" Foreground="#FBBF24" FontSize="11" FontWeight="SemiBold" />
-                    </Border>
-                </StackPanel>
-                <ui:TextBlock Text="Low-level sector and block hex editor for MIFARE Classic 1K. Recover keys, dump all 16 sectors, and modify individual blocks in-place." 
+                <ui:TextBlock Text="Edit Backup" FontTypography="Title" />
+                <ui:TextBlock Text="Changes are saved to the backup files, never to a card. Use Write Card to put a backup onto a card."
                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0" />
+                <ui:TextBlock Text="{Binding BackupName}"
+                              Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                              FontTypography="BodyStrong"
+                              Margin="0,6,0,0"
+                              Visibility="{Binding IsEditingBackup, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
 
             <!-- Actions Bar -->
             <ui:Card Margin="0,0,0,20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
+                <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <ui:Button Content="Check Keys (chk)" Appearance="Primary" Icon="{ui:SymbolIcon Key24}" Command="{Binding CheckKeysCommand}" Margin="0,0,10,0" />
-                        <ui:Button Content="Read All Blocks (Dump)" Icon="{ui:SymbolIcon ArrowDownload24}" Command="{Binding ReadAllBlocksCommand}" Margin="0,0,10,0" />
+                        <ui:Button Content="Save backup" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" Command="{Binding SaveBackupCommand}" Margin="0,0,10,0" />
                         <ui:Button Content="Export JSON" Icon="{ui:SymbolIcon DocumentSave24}" Command="{Binding SaveDumpJsonCommand}" Margin="0,0,10,0" />
                         <ui:Button Content="Export EML" Icon="{ui:SymbolIcon DocumentText24}" Command="{Binding SaveDumpEmlCommand}" />
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,6,0"
-                                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <ui:TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
-                        </StackPanel>
-                        <ProgressBar Width="160" Height="6" Value="{Binding ProgressValue}" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Grid>
+                    <ui:TextBlock Text="{Binding StatusMessage}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  FontSize="12"
+                                  TextWrapping="Wrap"
+                                  Margin="0,10,0,0" />
+                </StackPanel>
             </ui:Card>
 
             <!-- 16 Sectors Data Matrix (Interactive Professional Inline Hex Grid) -->
@@ -152,15 +143,15 @@
                                                                            VerticalAlignment="Center"
                                                                            Visibility="{Binding IsInvalid, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                                                            <!-- Write modified block button (Green) -->
-                                                            <ui:Button Icon="{ui:SymbolIcon Checkmark16}" 
+                                                            <!-- Save modified block into the backup -->
+                                                            <ui:Button Icon="{ui:SymbolIcon Checkmark16}"
                                                                        Appearance="Primary"
-                                                                       ToolTip="Write this modified block to card (hf mf wrbl)" 
+                                                                       ToolTip="Save this block into the backup files"
                                                                        Padding="6,2" Margin="0,0,4,0"
                                                                        Background="#16A34A"
                                                                        Foreground="White"
                                                                        Visibility="{Binding CanWrite, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                       Command="{Binding DataContext.WriteBlockDirectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                       Command="{Binding DataContext.SaveBlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                        CommandParameter="{Binding}" />
 
                                                             <!-- Revert changes button -->

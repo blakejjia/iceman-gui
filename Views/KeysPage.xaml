@@ -1,0 +1,203 @@
+<UserControl x:Class="iceman_gui.Views.KeysPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <ui:TextBlock Text="Keys" FontTypography="Title" />
+                <ui:TextBlock Text="Sector key files and dictionaries, used when reading or writing cards."
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              TextWrapping="Wrap"
+                              Margin="0,4,24,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <ui:Button Content="New key file" Appearance="Primary"
+                           Icon="{ui:SymbolIcon Add24}"
+                           Command="{Binding NewKeyFileCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Import" Icon="{ui:SymbolIcon ArrowImport24}"
+                           Command="{Binding ImportCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Open folder" Icon="{ui:SymbolIcon FolderOpen24}"
+                           Command="{Binding OpenFolderCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Status -->
+        <ui:TextBlock Grid.Row="1" Text="{Binding StatusMessage}"
+                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      FontSize="12"
+                      Margin="0,0,0,12"
+                      Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+        <!-- Empty state -->
+        <Border Grid.Row="2"
+                Visibility="{Binding HasNoFiles, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                CornerRadius="8"
+                Padding="24,40">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ui:SymbolIcon Symbol="Key24" FontSize="40"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,0,0,12" />
+                <ui:TextBlock Text="No key files yet" FontTypography="BodyStrong" FontSize="16"
+                              HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <ui:TextBlock Text="Create a new 1K key file or import a .bin / .dic file."
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              FontSize="12"
+                              HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- Key files -->
+        <Grid Grid.Row="2"
+              Visibility="{Binding HasFiles, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox Grid.Column="0"
+                     ItemsSource="{Binding KeyFiles}"
+                     SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,8" />
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Padding="12">
+                            <StackPanel>
+                                <ui:TextBlock Text="{Binding Name}" FontTypography="BodyStrong" FontSize="14"
+                                              TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <ui:TextBlock Text="{Binding KindLabel}" FontSize="11"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                  Margin="0,0,10,0" />
+                                    <ui:TextBlock Text="{Binding Count, StringFormat='{}{0} entries'}" FontSize="11"
+                                                  Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </StackPanel>
+                                <ui:TextBlock Text="{Binding Modified, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                              FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                              Margin="0,2,0,0" />
+                            </StackPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
+                <ui:Card>
+                    <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Key24" FontSize="18"
+                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                               Margin="0,0,8,0" />
+                                <ui:TextBlock Text="{Binding FileName}" FontTypography="Subtitle" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ui:Button Content="Save" Appearance="Primary" Icon="{ui:SymbolIcon Save24}"
+                                           Command="{Binding SaveCommand}" Margin="0,0,8,0" />
+                                <ui:Button Content="Delete" Appearance="Danger" Icon="{ui:SymbolIcon Delete24}"
+                                           Command="{Binding DeleteCommand}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- .bin editor -->
+                        <StackPanel Visibility="{Binding IsBin, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="Sector" FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Grid.Column="1" Text="Key A" FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Grid.Column="2" Text="Key B" FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Sector, StringFormat='Sector {0:D2}'}"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding KeyA, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontFamily="Consolas"
+                                                     MaxLength="12"
+                                                     Margin="0,0,8,0" />
+                                            <TextBox Grid.Column="2"
+                                                     Text="{Binding KeyB, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontFamily="Consolas"
+                                                     MaxLength="12" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- .dic editor -->
+                        <StackPanel Visibility="{Binding IsDictionary, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl ItemsSource="{Binding DictionaryKeys}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontFamily="Consolas"
+                                                     MaxLength="12"
+                                                     Margin="0,0,8,0" />
+                                            <ui:Button Grid.Column="1"
+                                                       Icon="{ui:SymbolIcon Dismiss24}"
+                                                       Appearance="Secondary"
+                                                       Command="{Binding DataContext.RemoveDictionaryKeyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <ui:Button Content="Add key" Icon="{ui:SymbolIcon Add24}"
+                                       Command="{Binding AddDictionaryKeyCommand}"
+                                       HorizontalAlignment="Left"
+                                       Margin="0,6,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

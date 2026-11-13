@@ -27,6 +27,11 @@ public partial class TagScannerViewModel : ObservableObject
     public bool CanWriteUid => CurrentTag != null && CurrentTag.CanChangeUid;
     public bool CannotWriteUid => HasCurrentTag && !CanWriteUid;
 
+    public CardCapabilities Capabilities => CardCapabilities.For(CurrentTag);
+    public bool CanBackup => CurrentTag != null && Capabilities.CanBackup && !IsBackingUp;
+    public bool CannotBackup => HasCurrentTag && (!Capabilities.CanBackup || IsBackingUp);
+    public string BackupHint => CurrentTag == null ? "Scan a card first." : Capabilities.Summary;
+
     public string DetectedMagicModeText
     {
         get
@@ -48,6 +53,18 @@ public partial class TagScannerViewModel : ObservableObject
         OnPropertyChanged(nameof(CanWriteUid));
         OnPropertyChanged(nameof(CannotWriteUid));
         OnPropertyChanged(nameof(DetectedMagicModeText));
+        OnPropertyChanged(nameof(Capabilities));
+        OnPropertyChanged(nameof(CanBackup));
+        OnPropertyChanged(nameof(CannotBackup));
+        OnPropertyChanged(nameof(BackupHint));
+
+        DumpEntry? existing = value == null ? null : DumpLibrary.Get(value.Uid);
+        BackupAlias = value == null
+            ? string.Empty
+            : (existing?.Alias ?? DumpLibrary.SuggestAlias(value));
+        BackupStatus = string.Empty;
+        HasBackupStatus = false;
+        HasBackupEntry = false;
     }
 
     [ObservableProperty]
@@ -93,6 +110,27 @@ public partial class TagScannerViewModel : ObservableObject
     private bool _isScanning;
 
     [ObservableProperty]
+    private bool _isBackingUp;
+
+    [ObservableProperty]
+    private string _backupAlias = string.Empty;
+
+    [ObservableProperty]
+    private string _backupStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasBackupStatus;
+
+    [ObservableProperty]
+    private bool _hasBackupEntry;
+
+    partial void OnIsBackingUpChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanBackup));
+        OnPropertyChanged(nameof(CannotBackup));
+    }
+
+    [ObservableProperty]
     private string _lastSavedPath = string.Empty;
 
     [ObservableProperty]
@@ -109,9 +147,6 @@ public partial class TagScannerViewModel : ObservableObject
     {
         _ = LoadHistorySilentlyAsync();
     }
-
-    [RelayCommand]
-    public void GoToMifare() => RequestNavigation?.Invoke("mifare");
 
     [RelayCommand]
     public async Task ShowHistoryAsync()
@@ -272,6 +307,59 @@ public partial class TagScannerViewModel : ObservableObject
             IsWritingUid = false;
         }
     }
+
+    [RelayCommand]
+    public async Task BackupCardAsync()
+    {
+        if (CurrentTag == null || !CanBackup)
+        {
+            return;
+        }
+
+        IsBackingUp = true;
+        HasBackupEntry = false;
+        HasBackupStatus = true;
+        BackupStatus = "Finding keys and reading the card...";
+
+        try
+        {
+            var progress = new Progress<string>(stage => BackupStatus = stage);
+            var (result, entry) = await MifareService.Instance.BackupCardAsync(CurrentTag, BackupAlias, progress);
+
+            if (!result.Success)
+            {
+                BackupStatus = result.Failure switch
+                {
+                    Pm3Failure.Unsupported => result.Error ?? "This card does not support automatic backup.",
+                    Pm3Failure.TimedOut => "The card did not finish in time. The session was reset; reconnect the device if it stays unresponsive.",
+                    Pm3Failure.StartFailed => result.Error ?? "Could not start the Proxmark3 session.",
+                    Pm3Failure.SessionLost => "The Proxmark3 session ended unexpectedly.",
+                    _ => result.Error ?? "Backup failed."
+                };
+                return;
+            }
+
+            if (entry == null)
+            {
+                BackupStatus = "The backup finished, but no dump files were found. Check the client dump path.";
+                return;
+            }
+
+            BackupStatus = $"Saved \"{entry.Alias}\" to your card library.";
+            HasBackupEntry = true;
+        }
+        catch (Exception ex)
+        {
+            BackupStatus = "Backup error: " + ex.Message;
+        }
+        finally
+        {
+            IsBackingUp = false;
+        }
+    }
+
+    [RelayCommand]
+    public void OpenLibrary() => RequestNavigation?.Invoke("library");
 
     [RelayCommand]
     public void OpenDumpsFolder()

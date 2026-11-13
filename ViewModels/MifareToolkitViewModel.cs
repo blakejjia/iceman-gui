@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,27 +9,51 @@ using iceman_gui.Services;
 
 namespace iceman_gui.ViewModels;
 
+/// <summary>
+/// Edits a saved backup. Changes are written back to the dump files, never to
+/// a card: writing to hardware only happens through the Write wizard.
+/// </summary>
 public partial class MifareToolkitViewModel : ObservableObject
 {
     [ObservableProperty]
     private MifareCardData _cardData = MifareCardData.CreateEmpty1K();
 
+    [ObservableProperty]
+    private bool _isEditingBackup;
+
+    [ObservableProperty]
+    private string _backupName = string.Empty;
+
+    [ObservableProperty]
+    private string _backupJsonPath = string.Empty;
+
+    [ObservableProperty]
+    private string _backupBinPath = string.Empty;
+
+    [ObservableProperty]
+    private string _statusMessage = "Open a backup from the card library.";
+
     public event Action<string>? RequestNavigation;
 
     [RelayCommand]
-    public void BackToScanner() => RequestNavigation?.Invoke("scanner");
+    public void Back() => RequestNavigation?.Invoke("back");
 
-    [ObservableProperty]
-    private bool _isBusy;
+    public void LoadBackup(DumpEntry entry)
+    {
+        MifareDumpFile? dump = DumpLibrary.LoadDump(entry.Uid);
+        if (dump == null)
+        {
+            StatusMessage = "Could not read the backup file.";
+            return;
+        }
 
-    [ObservableProperty]
-    private string _statusMessage = "Ready. Check keys or dump sectors.";
-
-    [ObservableProperty]
-    private string _progressText = string.Empty;
-
-    [ObservableProperty]
-    private int _progressValue;
+        CardData = dump.ToCardData();
+        IsEditingBackup = true;
+        BackupName = $"{entry.DisplayName} · {entry.Uid}";
+        BackupJsonPath = entry.DumpJsonPath;
+        BackupBinPath = entry.DumpBinPath;
+        StatusMessage = "Editing the saved backup. Changes are written to the dump files, not to a card.";
+    }
 
     [RelayCommand]
     public void CopyHex(string? hex)
@@ -43,110 +66,85 @@ public partial class MifareToolkitViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task CheckKeysAsync()
+    public void SaveBackup()
     {
-        IsBusy = true;
-        StatusMessage = "Checking default keys (hf mf chk --1k)...";
-
-        try
+        if (!IsEditingBackup)
         {
-            var card = await MifareService.Instance.CheckKeysAsync();
-            CardData = card;
-            StatusMessage = "Key check completed! Found keys for sectors.";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Key check failed: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    [RelayCommand]
-    public async Task ReadAllBlocksAsync()
-    {
-        IsBusy = true;
-        StatusMessage = "Reading all 64 blocks...";
-        ProgressValue = 0;
-
-        var progress = new Progress<(int current, int total)>(p =>
-        {
-            ProgressValue = (int)((double)p.current / p.total * 100);
-            ProgressText = $"Reading block {p.current} / {p.total}...";
-        });
-
-        try
-        {
-            await MifareService.Instance.ReadAllBlocksAsync(CardData, progress);
-            OnPropertyChanged(nameof(CardData));
-            StatusMessage = $"Full dump complete! UID: {CardData.Uid}, 64 blocks loaded.";
-            ProgressText = "Complete (64/64)";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Read failed: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-
-    [RelayCommand]
-    public async Task WriteBlockDirectAsync(MifareBlock? block)
-    {
-        if (block == null) return;
-
-        if (!block.IsValid)
-        {
-            StatusMessage = $"Cannot write block {block.BlockNumber:D2}: {block.ValidationTip}";
+            StatusMessage = "Open a backup first.";
             return;
         }
 
-        IsBusy = true;
-        StatusMessage = $"Writing block {block.BlockNumber:D2}...";
-
         try
         {
-            int secNum = block.BlockNumber / 4;
-            string keyA = CardData.Sectors[secNum].KeyA;
-            string cleanHex = block.EditHex.Trim().ToUpperInvariant();
+            SaveBackupFiles();
+            foreach (MifareSector sector in CardData.Sectors)
+            {
+                foreach (MifareBlock block in sector.Blocks)
+                {
+                    block.MarkSaved();
+                }
+            }
 
-            bool ok = await MifareService.Instance.WriteBlockAsync(block.BlockNumber, keyA, cleanHex);
-            if (ok)
-            {
-                block.MarkSaved();
-                StatusMessage = $"Block {block.BlockNumber:D2} written successfully!";
-            }
-            else
-            {
-                StatusMessage = $"Failed to write block {block.BlockNumber:D2}. Check keys or card permissions.";
-            }
+            StatusMessage = "Backup saved.";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Write error on block {block.BlockNumber:D2}: {ex.Message}";
+            StatusMessage = "Save error: " + ex.Message;
         }
-        finally
+    }
+
+    [RelayCommand]
+    public void SaveBlock(MifareBlock? block)
+    {
+        if (block == null)
         {
-            IsBusy = false;
+            return;
+        }
+
+        if (!block.IsValid)
+        {
+            StatusMessage = $"Cannot save block {block.BlockNumber:D2}: {block.ValidationTip}";
+            return;
+        }
+
+        if (!IsEditingBackup)
+        {
+            StatusMessage = "Open a backup from the card library before editing blocks.";
+            return;
+        }
+
+        try
+        {
+            SaveBackupFiles();
+            block.MarkSaved();
+            StatusMessage = $"Block {block.BlockNumber:D2} saved to the backup.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Save error on block {block.BlockNumber:D2}: {ex.Message}";
         }
     }
 
     [RelayCommand]
     public void RevertBlock(MifareBlock? block)
     {
-        if (block == null) return;
+        if (block == null)
+        {
+            return;
+        }
+
         block.Revert();
-        StatusMessage = $"Reverted block {block.BlockNumber:D2} to original dump data.";
+        StatusMessage = $"Reverted block {block.BlockNumber:D2} to the saved data.";
     }
 
     [RelayCommand]
     public void SaveDumpJson()
     {
+        if (!IsEditingBackup)
+        {
+            return;
+        }
+
         var env = Pm3EnvironmentResolver.Instance;
         if (!env.IsResolved) env.Resolve();
 
@@ -156,18 +154,23 @@ public partial class MifareToolkitViewModel : ObservableObject
 
         try
         {
-            CardData.SaveAsJson(path);
-            StatusMessage = $"Saved dump to: {Path.GetFileName(path)}";
+            MifareDumpFile.FromCardData(CardData).Save(path);
+            StatusMessage = $"Exported JSON to {Path.GetFileName(path)}";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Save error: {ex.Message}";
+            StatusMessage = "Export error: " + ex.Message;
         }
     }
 
     [RelayCommand]
     public void SaveDumpEml()
     {
+        if (!IsEditingBackup)
+        {
+            return;
+        }
+
         var env = Pm3EnvironmentResolver.Instance;
         if (!env.IsResolved) env.Resolve();
 
@@ -178,11 +181,18 @@ public partial class MifareToolkitViewModel : ObservableObject
         try
         {
             CardData.SaveAsEml(path);
-            StatusMessage = $"Saved EML dump to: {Path.GetFileName(path)}";
+            StatusMessage = $"Exported EML to {Path.GetFileName(path)}";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Save error: {ex.Message}";
+            StatusMessage = "Export error: " + ex.Message;
         }
+    }
+
+    private void SaveBackupFiles()
+    {
+        MifareDumpFile dump = MifareDumpFile.FromCardData(CardData);
+        dump.Save(BackupJsonPath);
+        dump.SaveBinary(BackupBinPath);
     }
 }

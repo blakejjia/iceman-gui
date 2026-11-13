@@ -21,62 +21,94 @@ public class TagScanService
         return await ProgressiveScanAsync(ct);
     }
 
+    /// <summary>
+    /// Fast single-step read of the card on the antenna (ISO 14443-A only).
+    /// Used by the write wizard before touching a card.
+    /// </summary>
+    public async Task<TagInfo> ReadCardInfoAsync(CancellationToken ct = default)
+    {
+        Pm3Result result = await Pm3ProcessService.Instance.ExecuteAsync("hf 14a info", 15_000, ct);
+        if (!result.Success)
+        {
+            throw new Pm3CommandException("hf 14a info", result);
+        }
+
+        return ParseTagOutput(result.Output);
+    }
+
     public async Task<TagInfo> ProgressiveScanAsync(CancellationToken ct = default)
     {
-        var proc = Pm3ProcessService.Instance;
-
-        // Tier 1: Lightning Fast Path for ISO 14443-A (Mifare Classic, Ultralight, NTAG, etc. ~90% of smart cards)
-        // Under persistent interactive session, this completes in ~150 - 350 ms!
+        // Timeouts measured against a real device: hf 14a info ~0.3s, hf search
+        // ~10.7s, lf search ~8.6s, auto ~19.4s. They cannot be interrupted once
+        // started, so every timeout is sized well above the observed worst case.
         try
         {
-            string hf14aOutput = await proc.ExecuteCommandAsync("hf 14a info", ct, 5000);
-            var tag14a = ParseTagOutput(hf14aOutput);
+            var tag14a = await RunTierAsync("hf 14a info", 10_000, ct);
             if (!string.IsNullOrEmpty(tag14a.Uid))
             {
                 return tag14a;
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
+        catch (Pm3CommandException ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            return new TagInfo();
+        }
 
-        // Tier 2: HF search across all other high-frequency standards (ISO 15693 / iCode, ISO 14443-B, FeliCa, iCLASS, Legic)
         try
         {
-            string hfSearchOutput = await proc.ExecuteCommandAsync("hf search", ct, 8000);
-            var tagHf = ParseTagOutput(hfSearchOutput);
+            var tagHf = await RunTierAsync("hf search", 45_000, ct);
             if (!string.IsNullOrEmpty(tagHf.Uid))
             {
                 return tagHf;
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
+        catch (Pm3CommandException ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            return new TagInfo();
+        }
 
-        // Tier 3: LF search for common 125 kHz RFID tags (EM410x, HID Prox, Indala, AWID, IoProx, T55xx)
         try
         {
-            string lfSearchOutput = await proc.ExecuteCommandAsync("lf search", ct, 10000);
-            var tagLf = ParseTagOutput(lfSearchOutput);
+            var tagLf = await RunTierAsync("lf search", 45_000, ct);
             if (!string.IsNullOrEmpty(tagLf.Uid) || !string.IsNullOrEmpty(tagLf.CardNumber))
             {
                 return tagLf;
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
-
-        // Tier 4: Comprehensive universal auto sweep fallback for exotic or weak modulation tags
-        try
+        catch (Pm3CommandException ex)
         {
-            string autoOutput = await proc.ExecuteCommandAsync("auto", ct, 25000);
-            var tagAuto = ParseTagOutput(autoOutput);
-            return tagAuto;
-        }
-        catch (OperationCanceledException) { throw; }
-        catch
-        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
             return new TagInfo();
         }
+
+        try
+        {
+            return await RunTierAsync("auto", 90_000, ct);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Pm3CommandException ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            return new TagInfo();
+        }
+    }
+
+    private static async Task<TagInfo> RunTierAsync(string command, int timeoutMs, CancellationToken ct)
+    {
+        var result = await Pm3ProcessService.Instance.ExecuteAsync(command, timeoutMs, ct);
+        ct.ThrowIfCancellationRequested();
+
+        if (!result.Success)
+        {
+            throw new Pm3CommandException(command, result);
+        }
+
+        return Instance.ParseTagOutput(result.Output);
     }
 
     public TagInfo ParseTagOutput(string rawOutput)

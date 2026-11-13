@@ -18,6 +18,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private MifareToolkitViewModel _mifareToolkit = new();
 
+    [ObservableProperty]
+    private LibraryViewModel _library = new();
+
+    [ObservableProperty]
+    private WriteViewModel _write = new();
+
+    [ObservableProperty]
+    private KeysViewModel _keys = new();
+
     public FlasherViewModel Flasher => Dashboard.Flasher;
 
     [ObservableProperty]
@@ -35,15 +44,42 @@ public partial class MainViewModel : ObservableObject
     public bool IsDashboardActive => SelectedPageTag == "dashboard";
     public bool IsScannerActive => SelectedPageTag == "scanner";
     public bool IsMifareActive => SelectedPageTag == "mifare";
+    public bool IsLibraryActive => SelectedPageTag == "library";
+    public bool IsWriteActive => SelectedPageTag == "write";
+    public bool IsKeysActive => SelectedPageTag == "keys";
+
+    private string _pageBeforeMifare = "library";
 
     partial void OnSelectedPageTagChanged(string value)
     {
+        if (value != "mifare")
+        {
+            _pageBeforeMifare = value;
+        }
+
         OnPropertyChanged(nameof(IsDashboardActive));
         OnPropertyChanged(nameof(IsScannerActive));
         OnPropertyChanged(nameof(IsMifareActive));
+        OnPropertyChanged(nameof(IsLibraryActive));
+        OnPropertyChanged(nameof(IsWriteActive));
+        OnPropertyChanged(nameof(IsKeysActive));
+
+        if (value == "library")
+        {
+            Library.Refresh();
+        }
+        else if (value == "write")
+        {
+            Write.RefreshSources();
+            Write.RefreshKeyFiles();
+        }
+        else if (value == "keys")
+        {
+            Keys.Refresh();
+        }
     }
 
-    public bool IsAppBusy => Dashboard.IsBusy || TagScanner.IsScanning || MifareToolkit.IsBusy || Flasher.IsFlashing;
+    public bool IsAppBusy => Dashboard.IsBusy || TagScanner.IsScanning || Flasher.IsFlashing;
 
     public MainViewModel()
     {
@@ -103,16 +139,23 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
-        MifareToolkit.PropertyChanged += (s, e) =>
+        TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
+        MifareToolkit.RequestNavigation += tag =>
         {
-            if (e.PropertyName == nameof(MifareToolkit.IsBusy))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
+            SelectedPageTag = tag == "back" ? _pageBeforeMifare : tag;
         };
 
-        TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
-        MifareToolkit.RequestNavigation += tag => SelectedPageTag = tag;
+        Library.OpenBackupRequested += entry =>
+        {
+            MifareToolkit.LoadBackup(entry);
+            SelectedPageTag = "mifare";
+        };
+
+        Library.WriteToCardRequested += entry =>
+        {
+            Write.SelectSource(entry);
+            SelectedPageTag = "write";
+        };
     }
 
     [RelayCommand]
@@ -162,11 +205,5 @@ public partial class MainViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Could not launch external terminal: {ex.Message}", "Terminal Launch Error");
         }
-    }
-
-    [RelayCommand]
-    public void CancelExecution()
-    {
-        Pm3ProcessService.Instance.CancelCurrent();
     }
 }
