@@ -66,11 +66,10 @@ public class Pm3EnvironmentResolver
         LibsDirectory = Path.Combine(clientDir, "libs");
         ShellDirectory = Path.Combine(LibsDirectory, "shell");
 
-        DumpsDirectory = Path.Combine(rootDir, "dumps");
-        if (!Directory.Exists(DumpsDirectory))
-        {
-            Directory.CreateDirectory(DumpsDirectory);
-        }
+        // User data never lives beside the executable (which may be read-only).
+        DumpsDirectory = AppPaths.DumpsDirectory;
+        AppPaths.EnsureCreated();
+        AppPaths.MigrateLegacyDumps(Path.Combine(rootDir, "dumps"));
 
         IsResolved = true;
     }

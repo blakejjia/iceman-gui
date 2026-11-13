@@ -16,7 +16,13 @@ public partial class MainViewModel : ObservableObject
     private TagScannerViewModel _tagScanner = new();
 
     [ObservableProperty]
-    private MifareToolkitViewModel _mifareToolkit = new();
+    private LibraryViewModel _library = new();
+
+    [ObservableProperty]
+    private WriteViewModel _write = new();
+
+    [ObservableProperty]
+    private EditUidViewModel _editUid = new();
 
     public FlasherViewModel Flasher => Dashboard.Flasher;
 
@@ -27,32 +33,45 @@ public partial class MainViewModel : ObservableObject
     private bool _isConnected;
 
     [ObservableProperty]
-    private bool _isMifareDetected;
-
-    [ObservableProperty]
     private string _selectedPageTag = "dashboard";
 
     public bool IsDashboardActive => SelectedPageTag == "dashboard";
     public bool IsScannerActive => SelectedPageTag == "scanner";
-    public bool IsMifareActive => SelectedPageTag == "mifare";
+    public bool IsLibraryActive => SelectedPageTag == "library";
+    public bool IsWriteActive => SelectedPageTag == "write";
+    public bool IsEditUidActive => SelectedPageTag == "edituid";
+
+    public double DeviceUiOpacity => IsConnected ? 1.0 : 0.35;
+
+    partial void OnIsConnectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(DeviceUiOpacity));
+    }
 
     partial void OnSelectedPageTagChanged(string value)
     {
         OnPropertyChanged(nameof(IsDashboardActive));
         OnPropertyChanged(nameof(IsScannerActive));
-        OnPropertyChanged(nameof(IsMifareActive));
+        OnPropertyChanged(nameof(IsLibraryActive));
+        OnPropertyChanged(nameof(IsWriteActive));
+        OnPropertyChanged(nameof(IsEditUidActive));
+
+        if (value == "library")
+        {
+            Library.Refresh();
+        }
+        else if (value == "write")
+        {
+            Write.RefreshSources();
+        }
     }
 
-    public bool IsAppBusy => Dashboard.IsBusy || TagScanner.IsScanning || MifareToolkit.IsBusy || Flasher.IsFlashing;
+    public Pm3Activity Activity => Pm3Activity.Instance;
 
     public MainViewModel()
     {
         Dashboard.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(Dashboard.IsBusy))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
             if (e.PropertyName == nameof(Dashboard.SelectedPort))
             {
                 ActivePort = Dashboard.SelectedPort?.PortName ?? "Disconnected";
@@ -62,7 +81,6 @@ public partial class MainViewModel : ObservableObject
                 IsConnected = Dashboard.IsConnected;
                 if (!IsConnected)
                 {
-                    IsMifareDetected = false;
                     SelectedPageTag = "dashboard";
                 }
                 else
@@ -72,47 +90,13 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
-        Dashboard.Flasher.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(Flasher.IsFlashing))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
-        };
-
-        TagScanner.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(TagScanner.IsScanning))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
-            if (e.PropertyName == nameof(TagScanner.CurrentTag))
-            {
-                var tag = TagScanner.CurrentTag;
-                if (tag != null && (tag.IsMifare || 
-                    tag.TagType.Contains("MIFARE", StringComparison.OrdinalIgnoreCase) ||
-                    tag.TagType.Contains("ISO14443-A", StringComparison.OrdinalIgnoreCase)))
-                {
-                    IsMifareDetected = true;
-                    // Also seed MifareToolkit with this card's UID
-                    if (!string.IsNullOrEmpty(tag.Uid))
-                    {
-                        MifareToolkit.CardData.Uid = tag.Uid;
-                    }
-                }
-            }
-        };
-
-        MifareToolkit.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(MifareToolkit.IsBusy))
-            {
-                OnPropertyChanged(nameof(IsAppBusy));
-            }
-        };
-
         TagScanner.RequestNavigation += tag => SelectedPageTag = tag;
-        MifareToolkit.RequestNavigation += tag => SelectedPageTag = tag;
+
+        Library.WriteToCardRequested += entry =>
+        {
+            Write.SelectSource(entry);
+            SelectedPageTag = "write";
+        };
     }
 
     [RelayCommand]
@@ -144,7 +128,7 @@ public partial class MainViewModel : ObservableObject
             else
             {
                 // Direct fallback using setup.bat in client directory
-                cmdArgs = $"/k \"cd /d \"{env.ClientDirectory}\" && if exist setup.bat call setup.bat && proxmark3.exe {port} -w\"";
+                cmdArgs = $"/k \"cd /d \"{env.ClientDirectory}\" && if exist \"{env.ClientDirectory}\\setup.bat\" call \"{env.ClientDirectory}\\setup.bat\" && \"{env.ClientDirectory}\\proxmark3.exe\" {port} -w\"";
             }
 
             var psi = new ProcessStartInfo
@@ -162,11 +146,5 @@ public partial class MainViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Could not launch external terminal: {ex.Message}", "Terminal Launch Error");
         }
-    }
-
-    [RelayCommand]
-    public void CancelExecution()
-    {
-        Pm3ProcessService.Instance.CancelCurrent();
     }
 }

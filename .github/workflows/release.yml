@@ -1,4 +1,4 @@
-name: Build & Release
+name: Release
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release Tag (e.g. v1.0.0)'
-        required: false
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
         type: string
         default: 'v1.0.0'
       draft:
@@ -25,13 +25,21 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
-    name: Build & Release Windows Package
+  build-and-release:
+    name: Build Windows release
     runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -42,52 +50,85 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
-      - name: Restore Dependencies
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
         run: dotnet restore iceman-gui.csproj
 
-      - name: Build Application
+      - name: Build
         run: dotnet build iceman-gui.csproj -c Release --no-restore
 
-      - name: Publish Binaries (win-x64, Self-Contained)
-        run: |
-          dotnet publish iceman-gui.csproj -c Release -r win-x64 --self-contained true -o publish/
+      - name: Publish self-contained exe
+        run: dotnet publish iceman-gui.csproj -c Release -r win-x64 --self-contained true -o publish/
 
-      - name: Verify Bundled Client & Dependencies
+      - name: Verify bundled client and runtime
         shell: pwsh
         run: |
-          if (-not (Test-Path "publish\client\proxmark3.exe")) {
-            throw "CRITICAL ERROR: publish\client\proxmark3.exe is missing from release output!"
+          $required = @(
+            "publish\iceman-gui.exe",
+            "publish\client\proxmark3.exe",
+            "publish\client\libs\Qt6Core.dll",
+            "publish\client\setup.bat",
+            "publish\pm3.bat"
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) {
+              throw "Release verification failed: '$path' is missing from the published output."
+            }
           }
-          if (-not (Test-Path "publish\client\libs\Qt6Core.dll")) {
-            throw "CRITICAL ERROR: publish\client\libs\Qt6Core.dll is missing from release output!"
-          }
-          if (-not (Test-Path "publish\iceman-gui.exe")) {
-            throw "CRITICAL ERROR: publish\iceman-gui.exe is missing from release output!"
-          }
-          Write-Host "Verification PASSED: Bundled Proxmark3 client and self-contained runtime are intact."
+          Write-Host "Verification passed: self-contained runtime and bundled Proxmark3 client are intact."
 
-      - name: Copy Documentation & License to Release
+      - name: Copy documentation and license
+        shell: pwsh
+        run: Copy-Item -Path "README.md", "LICENSE" -Destination "publish\" -Force
+
+      - name: Package zip and checksum
         shell: pwsh
         run: |
-          Copy-Item -Path "README.md", "LICENSE" -Destination "publish\" -ErrorAction SilentlyContinue
+          $zip = "iceman-gui-windows-x64.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path "publish\*" -DestinationPath $zip -Force
 
-      - name: Package Release Zip & Checksums
-        shell: pwsh
-        run: |
-          Compress-Archive -Path "publish\*" -DestinationPath "iceman-gui-windows-x64.zip" -Force
-          $hash = (Get-FileHash -Path "iceman-gui-windows-x64.zip" -Algorithm SHA256).Hash
-          "$hash  iceman-gui-windows-x64.zip" | Out-File -Encoding ascii SHA256SUMS.txt
-          $size = (Get-Item "iceman-gui-windows-x64.zip").Length / 1MB
-          Write-Host "Archive created: iceman-gui-windows-x64.zip ($([math]::Round($size, 2)) MB)"
+          $hash = (Get-FileHash -Path $zip -Algorithm SHA256).Hash
+          "$hash  $zip" | Out-File -Encoding ascii SHA256SUMS.txt
+
+          $size = [math]::Round((Get-Item $zip).Length / 1MB, 2)
+          Write-Host "Archive: $zip ($size MB)"
           Write-Host "SHA256: $hash"
 
-      - name: Create GitHub Release
+          $summary = @"
+          ## Release package
+
+          - iceman-gui-windows-x64.zip ($size MB)
+          - SHA256: $hash
+          "@
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iceman-gui-windows-x64
+          path: |
+            iceman-gui-windows-x64.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          tag_name: ${{ github.event_name == 'push' && github.ref_name || inputs.tag_name }}
+          name: iceman-gui ${{ inputs.tag_name || github.ref_name }}
           files: |
             iceman-gui-windows-x64.zip
             SHA256SUMS.txt
-          draft: ${{ github.event.inputs.draft || false }}
-          prerelease: ${{ github.event.inputs.prerelease || false }}
+          draft: ${{ inputs.draft || false }}
+          prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true

@@ -1,49 +1,91 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace iceman_gui.Core;
 
-public class Pm3OutputEventArgs : EventArgs
+public enum Pm3Failure
 {
-    public string Line { get; }
-    public bool IsError { get; }
+    None,
+    TimedOut,
+    SessionLost,
+    NotConnected,
+    StartFailed,
+    Unsupported
+}
 
-    public Pm3OutputEventArgs(string line, bool isError = false)
+public sealed class Pm3Result
+{
+    public bool Success { get; init; }
+    public string Output { get; init; } = string.Empty;
+    public Pm3Failure Failure { get; init; }
+    public string? Error { get; init; }
+
+    public static Pm3Result Ok(string output) => new() { Success = true, Output = output };
+
+    public static Pm3Result Fail(Pm3Failure failure, string error) =>
+        new() { Failure = failure, Error = error };
+}
+
+public sealed class Pm3CommandException : Exception
+{
+    public Pm3Result Result { get; }
+
+    public Pm3CommandException(string command, Pm3Result result)
+        : base($"{command} failed ({result.Failure}): {result.Error}")
     {
-        Line = line;
-        IsError = isError;
+        Result = result;
     }
 }
 
+/// <summary>
+/// Owns the single Proxmark3 client process and exposes it as a command API.
+/// The client is a line-oriented REPL with no end-of-command signal, so each
+/// command is followed by a unique "rem" marker whose "remark:" echo closes the
+/// response. Commands cannot be interrupted once started (stdin is not read
+/// until they return), so a timeout kills the session instead.
+/// </summary>
 public class Pm3ProcessService
 {
-    private static Pm3ProcessService? _instance;
-    public static Pm3ProcessService Instance => _instance ??= new Pm3ProcessService();
+    private static readonly Pm3ProcessService _instance = new();
+    public static Pm3ProcessService Instance => _instance;
 
-    private Process? _interactiveProcess;
-    private StreamWriter? _interactiveStdin;
-    private readonly SemaphoreSlim _commandLock = new SemaphoreSlim(1, 1);
-    private Process? _currentActiveProcess;
+    private static readonly Regex PromptEchoRegex = new(
+        @"^\[[^\]]+\]\s+(?:pm3|pm5)\s+-->", RegexOptions.Compiled);
 
-    // Interactive command routing state
-    private TaskCompletionSource<string>? _currentCommandTcs;
-    private string? _currentCommandMarker;
-    private StringBuilder? _currentCommandOutput;
+    private static readonly Regex ProgressRegex = new(
+        @"^\[[\\|/\-]\]\s*\d+$", RegexOptions.Compiled);
 
-    public event EventHandler<Pm3OutputEventArgs>? OutputReceived;
-    public event EventHandler<bool>? ConnectionStateChanged;
+    private enum CommandOutcome
+    {
+        Completed,
+        TimedOut,
+        SessionLost
+    }
+
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly object _sync = new();
+
+    private Process? _process;
+    private StreamWriter? _stdin;
+    private TaskCompletionSource<(CommandOutcome Outcome, string Output)>? _pending;
+    private StringBuilder? _buffer;
+    private string? _marker;
 
     public string CurrentPort { get; private set; } = string.Empty;
-    public bool IsConnected { get; private set; }
-    public bool IsBusy { get; private set; }
 
-    public void SetPort(string port)
+    public bool IsConnected
     {
-        CurrentPort = port;
+        get
+        {
+            Process? process = _process;
+            return process != null && !process.HasExited && _stdin != null;
+        }
     }
 
     public ProcessStartInfo CreateBaseStartInfo(string arguments)
@@ -73,357 +115,427 @@ public class Pm3ProcessService
             StandardErrorEncoding = Encoding.UTF8
         };
 
-        // Inject runtime environment with proper trailing slashes for Qt
         string currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
         psi.EnvironmentVariables["PATH"] = $"{env.LibsDirectory};{env.ShellDirectory};{currentPath}";
-        
+
         string libsSlash = env.LibsDirectory.TrimEnd('\\') + "\\";
         psi.EnvironmentVariables["QT_PLUGIN_PATH"] = libsSlash;
         psi.EnvironmentVariables["QT_QPA_PLATFORM_PLUGIN_PATH"] = libsSlash;
-        psi.EnvironmentVariables["HOME"] = env.ClientDirectory;
+        psi.EnvironmentVariables["HOME"] = AppPaths.ClientHome;
         psi.EnvironmentVariables["MSYSTEM"] = "MINGW64";
 
         return psi;
     }
 
-    /// <summary>
-    /// Executes a PM3 command. Uses the persistent interactive session if active,
-    /// or starts one if port is set, with fallback to single standalone execution.
-    /// </summary>
-    public async Task<string> ExecuteCommandAsync(string command, CancellationToken ct = default, int timeoutMs = 60000)
+    public async Task<bool> ConnectAsync(string port, int timeoutMs = 15000, CancellationToken ct = default)
     {
-        await _commandLock.WaitAsync(ct);
-        IsBusy = true;
+        if (string.IsNullOrWhiteSpace(port))
+        {
+            return false;
+        }
 
+        await _gate.WaitAsync(ct);
         try
         {
-            // If session is not running but we have a port, try to start the persistent session
-            if ((_interactiveProcess == null || _interactiveProcess.HasExited) && !string.IsNullOrWhiteSpace(CurrentPort))
+            if (IsConnected && string.Equals(CurrentPort, port, StringComparison.OrdinalIgnoreCase))
             {
-                await StartInteractiveSessionInternalAsync(CurrentPort, 12000);
+                return true;
             }
 
-            if (_interactiveProcess != null && !_interactiveProcess.HasExited && _interactiveStdin != null)
+            await StopSessionAsync(graceful: false);
+            CurrentPort = port;
+
+            if (await StartSessionWithRetryAsync(timeoutMs, ct))
             {
-                return await ExecuteInteractiveCommandInternalAsync(command, ct, timeoutMs);
+                return true;
             }
 
-            // Fallback: standalone one-shot process execution
-            return await ExecuteStandaloneCommandInternalAsync(command, ct, timeoutMs);
+            CurrentPort = string.Empty;
+            await StopSessionAsync(graceful: false);
+            return false;
         }
         finally
         {
-            IsBusy = false;
-            _commandLock.Release();
+            _gate.Release();
         }
     }
 
-    private async Task<string> ExecuteInteractiveCommandInternalAsync(string command, CancellationToken ct, int timeoutMs)
+    public async Task DisconnectAsync(CancellationToken ct = default)
     {
-        if (_interactiveStdin == null || _interactiveProcess == null || _interactiveProcess.HasExited)
-        {
-            throw new InvalidOperationException("Interactive session is not available.");
-        }
-
-        string marker = $"END_{Guid.NewGuid():N}";
-        var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var sb = new StringBuilder();
-
-        _currentCommandMarker = marker;
-        _currentCommandOutput = sb;
-        _currentCommandTcs = tcs;
-
+        await _gate.WaitAsync(ct);
         try
         {
-            _interactiveStdin.WriteLine(command);
-            _interactiveStdin.WriteLine($"rem {marker}");
-            await _interactiveStdin.FlushAsync();
+            await StopSessionAsync(graceful: true);
+            CurrentPort = string.Empty;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            linkedCts.CancelAfter(timeoutMs);
-
-            using (linkedCts.Token.Register(() =>
+    /// <summary>
+    /// Executes a command and returns its console output. If no session is
+    /// running, one is started on the current port; after an explicit
+    /// DisconnectAsync the current port is cleared and commands fail instead.
+    /// </summary>
+    public async Task<Pm3Result> ExecuteAsync(string command, int timeoutMs = 60000, CancellationToken ct = default)
+    {
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (!IsConnected)
             {
-                // PM3 cancels current reader/search upon receiving Enter (newline)
-                try
+                if (string.IsNullOrWhiteSpace(CurrentPort))
                 {
-                    _interactiveStdin?.WriteLine();
-                    _interactiveStdin?.Flush();
+                    return Pm3Result.Fail(Pm3Failure.NotConnected, "No Proxmark3 port is selected.");
                 }
-                catch { }
 
-                tcs.TrySetCanceled(linkedCts.Token);
-            }))
+                if (!await StartSessionWithRetryAsync(15000, ct))
+                {
+                    await StopSessionAsync(graceful: false);
+                    return Pm3Result.Fail(Pm3Failure.StartFailed,
+                        $"Could not start the Proxmark3 session on {CurrentPort}. If the device was just interrupted, unplug and replug it, then reconnect.");
+                }
+            }
+
+            string marker = "END_" + Guid.NewGuid().ToString("N");
+            var (outcome, output) = await SendInternalAsync(command, marker, timeoutMs, ct);
+
+            switch (outcome)
             {
-                return await tcs.Task;
+                case CommandOutcome.Completed:
+                    return Pm3Result.Ok(output);
+
+                case CommandOutcome.SessionLost:
+                    await StopSessionAsync(graceful: false);
+                    return Pm3Result.Fail(Pm3Failure.SessionLost, "The Proxmark3 session ended unexpectedly.");
+
+                default:
+                    // A running command cannot be interrupted through stdin, so
+                    // the only safe recovery is to drop the session; the next
+                    // command reconnects on the same port.
+                    await StopSessionAsync(graceful: false);
+                    return Pm3Result.Fail(Pm3Failure.TimedOut, $"'{command}' did not finish within {timeoutMs / 1000.0:0.#}s.");
             }
         }
         finally
         {
-            _currentCommandTcs = null;
-            _currentCommandMarker = null;
-            _currentCommandOutput = null;
+            _gate.Release();
         }
-    }
-
-    private async Task<string> ExecuteStandaloneCommandInternalAsync(string command, CancellationToken ct, int timeoutMs)
-    {
-        var outputBuilder = new StringBuilder();
-        var env = Pm3EnvironmentResolver.Instance;
-        if (!env.IsResolved) env.Resolve();
-
-        string portArg = string.IsNullOrWhiteSpace(CurrentPort) ? "" : $"{CurrentPort} ";
-        string args = $"{portArg}-f -w -c \"{command}\"";
-
-        var psi = CreateBaseStartInfo(args);
-        using var proc = new Process { StartInfo = psi };
-        _currentActiveProcess = proc;
-
-        proc.OutputDataReceived += (s, e) =>
-        {
-            if (e.Data != null)
-            {
-                outputBuilder.AppendLine(e.Data);
-                OutputReceived?.Invoke(this, new Pm3OutputEventArgs(e.Data));
-            }
-        };
-
-        proc.ErrorDataReceived += (s, e) =>
-        {
-            if (e.Data != null)
-            {
-                outputBuilder.AppendLine(e.Data);
-                OutputReceived?.Invoke(this, new Pm3OutputEventArgs(e.Data, true));
-            }
-        };
-
-        proc.Start();
-        ChildProcessTracker.AddProcess(proc);
-
-        proc.BeginOutputReadLine();
-        proc.BeginErrorReadLine();
-
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linkedCts.CancelAfter(timeoutMs);
-
-        try
-        {
-            await proc.WaitForExitAsync(linkedCts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            if (!proc.HasExited)
-            {
-                try { proc.Kill(true); } catch { }
-            }
-            throw;
-        }
-        finally
-        {
-            _currentActiveProcess = null;
-        }
-
-        return outputBuilder.ToString();
     }
 
     /// <summary>
-    /// Starts persistent interactive terminal session asynchronously and waits for ready prompt.
+    /// Stops the interactive session and holds the device while <paramref name="work"/>
+    /// runs, so operations such as flashing cannot race a queued command.
     /// </summary>
-    public async Task<bool> StartInteractiveSessionAsync(string port, int timeoutMs = 8000)
+    public async Task<T> RunExclusiveAsync<T>(Func<Task<T>> work, CancellationToken ct = default)
     {
-        await _commandLock.WaitAsync();
+        await _gate.WaitAsync(ct);
         try
         {
-            return await StartInteractiveSessionInternalAsync(port, timeoutMs);
+            await StopSessionAsync(graceful: false);
+            return await work();
         }
         finally
         {
-            _commandLock.Release();
+            _gate.Release();
         }
     }
 
-    private async Task<bool> StartInteractiveSessionInternalAsync(string port, int timeoutMs = 8000)
+    private async Task<bool> StartSessionWithRetryAsync(int timeoutMs, CancellationToken ct)
     {
-        if (_interactiveProcess != null && !_interactiveProcess.HasExited && CurrentPort == port && IsConnected)
+        if (await StartSessionAsync(timeoutMs, ct))
         {
             return true;
         }
 
-        StopInteractiveSession();
+        // A killed client can make the USB CDC port disappear for a moment.
+        // Give the device a chance to re-enumerate, then try once more with
+        // whatever Proxmark port is currently present.
+        await StopSessionAsync(graceful: false);
+        await Task.Delay(800, ct);
 
-        CurrentPort = port;
-        var env = Pm3EnvironmentResolver.Instance;
-        if (!env.IsResolved) env.Resolve();
-
-        string args = string.IsNullOrWhiteSpace(port) ? "-w -f" : $"{port} -w -f";
-        var psi = CreateBaseStartInfo(args);
-
-        var readyTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        try
+        var device = SerialPortDetector.GetAvailablePorts().FirstOrDefault(p => p.IsProxmark);
+        if (device != null)
         {
-            _interactiveProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
-
-            _interactiveProcess.OutputDataReceived += (s, e) =>
-            {
-                if (e.Data == null) return;
-
-                OutputReceived?.Invoke(this, new Pm3OutputEventArgs(e.Data));
-
-                string clean = AnsiColorParser.StripAnsi(e.Data);
-
-                // Check for session ready prompt
-                if (clean.Contains("pm3 -->") || 
-                    clean.Contains("Communicating with PM3 over") || 
-                    clean.Contains("Communicating with Proxmark3") || 
-                    clean.Contains("remark: READY"))
-                {
-                    readyTcs.TrySetResult(true);
-                }
-                else if (clean.Contains("Can't open serial port") || clean.Contains("OFFLINE mode"))
-                {
-                    readyTcs.TrySetResult(false);
-                }
-
-                // Check active interactive command sentinel
-                if (_currentCommandMarker != null && _currentCommandTcs != null)
-                {
-                    if (clean.Contains("remark:") && clean.Contains(_currentCommandMarker))
-                    {
-                        var tcs = _currentCommandTcs;
-                        var result = _currentCommandOutput?.ToString() ?? string.Empty;
-                        _currentCommandTcs = null;
-                        _currentCommandMarker = null;
-                        _currentCommandOutput = null;
-                        tcs.TrySetResult(result);
-                    }
-                    else if (!clean.Contains($"rem {_currentCommandMarker}") &&
-                             !clean.Contains("rem READY") &&
-                             !clean.Contains("remark: READY"))
-                    {
-                        // Append standard command output line (excluding the rem marker echo)
-                        _currentCommandOutput?.AppendLine(e.Data);
-                    }
-                }
-            };
-
-            _interactiveProcess.ErrorDataReceived += (s, e) =>
-            {
-                if (e.Data == null) return;
-                OutputReceived?.Invoke(this, new Pm3OutputEventArgs(e.Data, true));
-            };
-
-            _interactiveProcess.Exited += (s, e) =>
-            {
-                readyTcs.TrySetResult(false);
-                if (_currentCommandTcs != null)
-                {
-                    _currentCommandTcs.TrySetException(new IOException("Proxmark3 session exited unexpectedly."));
-                    _currentCommandTcs = null;
-                }
-                IsConnected = false;
-                ConnectionStateChanged?.Invoke(this, false);
-            };
-
-            _interactiveProcess.Start();
-            ChildProcessTracker.AddProcess(_interactiveProcess);
-
-            _interactiveStdin = _interactiveProcess.StandardInput;
-            _interactiveProcess.BeginOutputReadLine();
-            _interactiveProcess.BeginErrorReadLine();
-
-            // Send rem READY to ensure a newline-terminated output line is emitted when PM3 prompt arrives
-            try
-            {
-                _interactiveStdin.WriteLine("rem READY");
-                _interactiveStdin.Flush();
-            }
-            catch { }
-
-            using var cts = new CancellationTokenSource(timeoutMs);
-            using (cts.Token.Register(() => readyTcs.TrySetResult(false)))
-            {
-                bool ready = await readyTcs.Task;
-                if (ready)
-                {
-                    IsConnected = true;
-                    ConnectionStateChanged?.Invoke(this, true);
-                    return true;
-                }
-                else
-                {
-                    StopInteractiveSession();
-                    return false;
-                }
-            }
+            CurrentPort = device.PortName;
         }
-        catch (Exception ex)
+
+        return await StartSessionAsync(timeoutMs, ct);
+    }
+
+    private async Task<bool> StartSessionAsync(int timeoutMs, CancellationToken ct)
+    {
+        var env = Pm3EnvironmentResolver.Instance;
+        if (!env.IsResolved && !env.Resolve())
         {
-            OutputReceived?.Invoke(this, new Pm3OutputEventArgs($"[!] Failed to start session: {ex.Message}", true));
-            StopInteractiveSession();
             return false;
         }
-    }
 
-    public bool StartInteractiveSession(string port)
-    {
-        return StartInteractiveSessionAsync(port).GetAwaiter().GetResult();
-    }
-
-    public void SendInteractiveInput(string input)
-    {
-        if (_interactiveStdin != null && _interactiveProcess != null && !_interactiveProcess.HasExited)
+        if (string.IsNullOrEmpty(env.ExecutablePath) || !File.Exists(env.ExecutablePath))
         {
-            _interactiveStdin.WriteLine(input);
+            return false;
         }
-    }
 
-    public void StopInteractiveSession()
-    {
-        if (_interactiveProcess != null)
-        {
-            try
-            {
-                if (!_interactiveProcess.HasExited)
-                {
-                    _interactiveStdin?.WriteLine("quit");
-                    if (!_interactiveProcess.WaitForExit(1000))
-                    {
-                        _interactiveProcess.Kill(true);
-                    }
-                }
-            }
-            catch { }
-            finally
-            {
-                _interactiveProcess.Dispose();
-                _interactiveProcess = null;
-                _interactiveStdin = null;
-                IsConnected = false;
-                ConnectionStateChanged?.Invoke(this, false);
-            }
-        }
-    }
+        ClientHome.EnsureSeeded(Path.Combine(env.ClientDirectory, ".proxmark3", "preferences.json"));
 
-    public void CancelCurrent()
-    {
+        ProcessStartInfo psi;
         try
         {
-            if (_interactiveStdin != null && _interactiveProcess != null && !_interactiveProcess.HasExited)
+            psi = CreateBaseStartInfo($"{CurrentPort} -w -f");
+        }
+        catch
+        {
+            return false;
+        }
+
+        var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        process.OutputDataReceived += (_, e) => HandleLine(e.Data);
+        process.ErrorDataReceived += (_, e) => HandleLine(e.Data);
+        process.Exited += (_, _) => HandleExit(process);
+
+        try
+        {
+            process.Start();
+            ChildProcessTracker.AddProcess(process);
+
+            _process = process;
+            _stdin = process.StandardInput;
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+        catch
+        {
+            process.Dispose();
+            _process = null;
+            _stdin = null;
+            return false;
+        }
+
+        string marker = "READY_" + Guid.NewGuid().ToString("N");
+        var (outcome, _) = await SendInternalAsync($"rem {marker}", marker, timeoutMs, ct);
+        return outcome == CommandOutcome.Completed;
+    }
+
+    private async Task<(CommandOutcome Outcome, string Output)> SendInternalAsync(
+        string command, string marker, int timeoutMs, CancellationToken ct)
+    {
+        var tcs = new TaskCompletionSource<(CommandOutcome Outcome, string Output)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        lock (_sync)
+        {
+            _pending = tcs;
+            _marker = marker;
+            _buffer = new StringBuilder();
+        }
+
+        try
+        {
+            StreamWriter? stdin = _stdin;
+            if (stdin == null)
             {
-                _interactiveStdin.WriteLine();
-                _interactiveStdin.Flush();
+                ClearPending();
+                return (CommandOutcome.SessionLost, string.Empty);
+            }
+
+            // The client reads stdin only between commands, so the marker is
+            // queued right behind the command and runs when it returns.
+            stdin.WriteLine(command);
+            stdin.WriteLine($"rem {marker}");
+            await stdin.FlushAsync();
+        }
+        catch
+        {
+            ClearPending();
+            return (CommandOutcome.SessionLost, string.Empty);
+        }
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var timeout = Task.Delay(timeoutMs, cts.Token);
+        var finished = await Task.WhenAny(tcs.Task, timeout);
+
+        if (finished == tcs.Task)
+        {
+            cts.Cancel();
+            return await tcs.Task;
+        }
+
+        ClearPending();
+        return (CommandOutcome.TimedOut, string.Empty);
+    }
+
+    private void HandleLine(string? rawLine)
+    {
+        if (string.IsNullOrEmpty(rawLine))
+        {
+            return;
+        }
+
+        foreach (string segment in rawLine.Split('\r'))
+        {
+            string clean = AnsiColorParser.StripAnsi(segment).TrimEnd();
+            if (clean.Length == 0 || ProgressRegex.IsMatch(clean))
+            {
+                continue;
+            }
+
+            lock (_sync)
+            {
+                // "remark:" lines are our own sentinels (command markers and
+                // the connect handshake); they never belong to command output,
+                // even when a late one arrives after the next command started.
+                if (clean.Contains("remark:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var pendingMarker = _pending;
+                    if (pendingMarker != null &&
+                        _marker != null &&
+                        clean.Contains(_marker, StringComparison.Ordinal))
+                    {
+                        string output = _buffer?.ToString() ?? string.Empty;
+                        ClearPendingLocked();
+                        pendingMarker.TrySetResult((CommandOutcome.Completed, output));
+                    }
+
+                    continue;
+                }
+
+                if (PromptEchoRegex.IsMatch(clean))
+                {
+                    continue;
+                }
+
+                var pending = _pending;
+                if (pending == null)
+                {
+                    // Startup banner or a late line between commands.
+                    continue;
+                }
+
+                _buffer?.AppendLine(clean);
             }
         }
-        catch { }
+    }
 
-        if (_currentActiveProcess != null && !_currentActiveProcess.HasExited)
+    private void HandleExit(Process process)
+    {
+        lock (_sync)
+        {
+            _pending?.TrySetResult((CommandOutcome.SessionLost, string.Empty));
+            ClearPendingLocked();
+        }
+
+        if (ReferenceEquals(_process, process))
+        {
+            _process = null;
+            _stdin = null;
+        }
+        // Ownership of the Process object stays with StopSessionAsync, which
+        // kills and waits for it; disposing it here races with that path.
+    }
+
+    private async Task StopSessionAsync(bool graceful)
+    {
+        Process? process = _process;
+        StreamWriter? stdin = _stdin;
+        _process = null;
+        _stdin = null;
+
+        lock (_sync)
+        {
+            _pending?.TrySetResult((CommandOutcome.SessionLost, string.Empty));
+            ClearPendingLocked();
+        }
+
+        if (process == null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!process.HasExited)
+            {
+                if (graceful && stdin != null)
+                {
+                    try
+                    {
+                        stdin.WriteLine("quit");
+                        stdin.Flush();
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        using var quitWait = new CancellationTokenSource(800);
+                        await process.WaitForExitAsync(quitWait.Token);
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                if (!process.HasExited)
+                {
+                    try
+                    {
+                        process.Kill(true);
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                // Wait for the OS to reap the process before the next connect
+                // attempt tries to open the COM port.
+                try
+                {
+                    using var reapWait = new CancellationTokenSource(5000);
+                    await process.WaitForExitAsync(reapWait.Token);
+                }
+                catch
+                {
+                }
+            }
+        }
+        catch
+        {
+        }
+        finally
         {
             try
             {
-                _currentActiveProcess.Kill(true);
+                stdin?.Dispose();
             }
-            catch { }
+            catch
+            {
+            }
+
+            try
+            {
+                process.Dispose();
+            }
+            catch
+            {
+            }
         }
+    }
+
+    private void ClearPending()
+    {
+        lock (_sync)
+        {
+            ClearPendingLocked();
+        }
+    }
+
+    private void ClearPendingLocked()
+    {
+        _pending = null;
+        _marker = null;
+        _buffer = null;
     }
 }

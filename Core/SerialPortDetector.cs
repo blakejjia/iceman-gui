@@ -10,6 +10,7 @@ public class PortItem
     public string PortName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsProxmark { get; set; }
+    public bool IsDetected { get; set; }
 
     public override string ToString()
     {
@@ -29,7 +30,8 @@ public static class SerialPortDetector
             var item = new PortItem
             {
                 PortName = kvp.Key,
-                Description = kvp.Value
+                Description = kvp.Value,
+                IsDetected = true
             };
 
             if (kvp.Value.Contains("USBSER", StringComparison.OrdinalIgnoreCase) ||

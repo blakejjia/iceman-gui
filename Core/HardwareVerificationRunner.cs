@@ -33,7 +33,11 @@ public class HardwareVerificationRunner
         var pm3Port = ports.Find(p => p.IsProxmark) ?? ports.Find(p => p.PortName == "COM9") ?? ports[0];
         Console.WriteLine($"[+] Detected Port: {pm3Port.PortName} ({pm3Port.Description})");
 
-        Pm3ProcessService.Instance.SetPort(pm3Port.PortName);
+        if (!await Pm3ProcessService.Instance.ConnectAsync(pm3Port.PortName, 15_000))
+        {
+            Console.WriteLine($"[!] FAILED: Could not start a Proxmark3 session on {pm3Port.PortName}.");
+            return false;
+        }
 
         Console.WriteLine("[*] Querying hardware version (hw version)...");
         var hwInfo = await HardwareService.Instance.GetHardwareInfoAsync();

@@ -14,11 +14,15 @@ public class HardwareService
 
     public async Task<HardwareInfo> GetHardwareInfoAsync(CancellationToken ct = default)
     {
-        var proc = Pm3ProcessService.Instance;
-        string output = await proc.ExecuteCommandAsync("hw version", ct, 15000);
-        string clean = AnsiColorParser.StripAnsi(output);
+        var result = await Pm3ProcessService.Instance.ExecuteAsync("hw version", 10_000, ct);
+        if (!result.Success)
+        {
+            throw new Pm3CommandException("hw version", result);
+        }
 
-        var info = new HardwareInfo { RawStatus = output };
+        string clean = AnsiColorParser.StripAnsi(result.Output);
+
+        var info = new HardwareInfo { RawStatus = result.Output };
 
         // Client version & compiler & platform
         var clientMatch = Regex.Match(clean, @"Iceman/master/([^\s]+)");
@@ -69,9 +73,13 @@ public class HardwareService
 
     public async Task MeasureAntennaAsync(HardwareInfo info, CancellationToken ct = default)
     {
-        var proc = Pm3ProcessService.Instance;
-        string output = await proc.ExecuteCommandAsync("hw tune", ct, 20000);
-        string clean = AnsiColorParser.StripAnsi(output);
+        var result = await Pm3ProcessService.Instance.ExecuteAsync("hw tune", 30_000, ct);
+        if (!result.Success)
+        {
+            throw new Pm3CommandException("hw tune", result);
+        }
+
+        string clean = AnsiColorParser.StripAnsi(result.Output);
 
         // LF Antenna Voltage: e.g. "125.00 kHz ........... 34.50 V"
         var lfMatch = Regex.Match(clean, @"125\.00\s*kHz[^\d]*([\d\.]+)\s*V", RegexOptions.IgnoreCase);

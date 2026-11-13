@@ -133,6 +133,7 @@ public partial class FlasherViewModel : ObservableObject
             }
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Flashing firmware");
         HasFlashingStarted = true;
         IsFlashing = true;
         IsFlashSuccess = false;
@@ -141,10 +142,8 @@ public partial class FlasherViewModel : ObservableObject
 
         try
         {
-            // Release COM port so flasher can access it
-            Pm3ProcessService.Instance.StopInteractiveSession();
-
-            // Flash with bootloader unlock always enabled
+            // FlasherService releases the COM port and holds the session gate
+            // for the duration of the flash.
             string result = await FlasherService.Instance.FlashDeviceAsync(port, flashBootloader: true);
             FlashLog += result;
 

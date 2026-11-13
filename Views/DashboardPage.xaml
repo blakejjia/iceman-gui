@@ -37,7 +37,13 @@
                             <ComboBox Grid.Column="1" ItemsSource="{Binding Ports}" SelectedItem="{Binding SelectedPort}" Margin="0,0,12,0" />
                             <ui:Button Grid.Column="2" Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}" Command="{Binding RefreshPortsCommand}" Margin="0,0,8,0" />
                             <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                <ui:Button Content="Connect" Appearance="Primary" Icon="{ui:SymbolIcon PlugConnected24}" Command="{Binding ConnectCommand}" Margin="0,0,8,0" />
+                                <ui:Button AutomationProperties.Name="Connect" Appearance="Primary" Icon="{ui:SymbolIcon PlugConnected24}" Command="{Binding ConnectCommand}" Margin="0,0,8,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock Text="Connect" VerticalAlignment="Center" />
+                                        <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                         Visibility="{Binding ConnectCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ui:Button>
                                 <ui:Button Content="Disconnect" Icon="{ui:SymbolIcon PlugDisconnected24}" Command="{Binding DisconnectCommand}" />
                             </StackPanel>
                         </Grid>
@@ -67,11 +73,12 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Action 1: Hardware Specs (Windows 11 Settings pattern with chevron) -->
+                <!-- Action 1: Hardware Specs (visible but disabled until a device is connected) -->
                 <ui:CardAction Command="{Binding ShowHardwareDetailsCommand}"
                                IsChevronVisible="True"
                                Margin="0,0,0,12"
-                               Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                               IsEnabled="{Binding IsConnected}"
+                               Opacity="{Binding DeviceControlsOpacity}">
                     <Grid Margin="0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -115,6 +122,35 @@
                         </StackPanel>
                     </Grid>
                 </ui:CardAction>
+
+                <!-- Appearance -->
+                <ui:Card Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Settings24"
+                                           FontSize="22"
+                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                           Margin="0,0,16,0"
+                                           VerticalAlignment="Center" />
+                            <StackPanel>
+                                <ui:TextBlock Text="Appearance" FontTypography="BodyStrong" FontSize="14" />
+                                <ui:TextBlock Text="Choose a light or dark interface. The setting is remembered."
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              FontSize="12"
+                                              Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  Width="160"
+                                  VerticalAlignment="Center"
+                                  ItemsSource="{Binding ThemeOptions}"
+                                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+                    </Grid>
+                </ui:Card>
             </StackPanel>
         </ScrollViewer>
 
@@ -196,9 +232,13 @@
                                 <ui:TextBlock Text="Antenna Tuning (hw tune)" FontTypography="Subtitle" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,8,0"
-                                                 Visibility="{Binding MeasureAntennaCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                <ui:Button Content="Measure Antenna" Icon="{ui:SymbolIcon Play24}" Command="{Binding MeasureAntennaCommand}" />
+                                <ui:Button AutomationProperties.Name="Measure Antenna" Icon="{ui:SymbolIcon Play24}" Command="{Binding MeasureAntennaCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock Text="Measure Antenna" VerticalAlignment="Center" />
+                                        <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                         Visibility="{Binding MeasureAntennaCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ui:Button>
                             </StackPanel>
                         </Grid>
 
@@ -324,11 +364,14 @@
 
                         <!-- Start Flashing Action -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <ui:Button Content="Start Flashing Firmware" Appearance="Primary" Icon="{ui:SymbolIcon Play24}" 
-                                       Command="{Binding Flasher.FlashCommand}" IsEnabled="{Binding Flasher.CanFlash}" Margin="0,0,12,0" />
-                            <ui:ProgressRing Width="16" Height="16" IsIndeterminate="True" Margin="0,0,12,0"
-                                             Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <ProgressBar Width="140" Height="6" IsIndeterminate="{Binding Flasher.IsFlashing}" Visibility="{Binding Flasher.IsFlashing, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" />
+                            <ui:Button AutomationProperties.Name="Start Flashing Firmware" Appearance="Primary" Icon="{ui:SymbolIcon Play24}"
+                                       Command="{Binding Flasher.FlashCommand}" IsEnabled="{Binding Flasher.CanFlash}" Margin="0,0,12,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:TextBlock Text="Start Flashing Firmware" VerticalAlignment="Center" />
+                                    <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="8,0,0,0"
+                                                     Visibility="{Binding Flasher.FlashCommand.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
+                            </ui:Button>
                             <ui:Button Content="Connect to Device" Appearance="Primary" Icon="{ui:SymbolIcon PlugConnected24}" 
                                        Command="{Binding Flasher.ConnectDeviceAfterFlashCommand}"
                                        Visibility="{Binding Flasher.IsFlashSuccess, Converter={StaticResource BooleanToVisibilityConverter}}"

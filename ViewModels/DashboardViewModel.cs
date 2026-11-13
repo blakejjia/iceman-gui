@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,6 +44,23 @@ public partial class DashboardViewModel : ObservableObject
 
     public bool IsShowingMainDashboard => !IsShowingHardwareDetails && !IsShowingOsDetails;
 
+    public IReadOnlyList<string> ThemeOptions { get; } = new[] { "Dark", "Light", "System" };
+
+    [ObservableProperty]
+    private string _selectedTheme = ThemeService.Current.ToString();
+
+    partial void OnSelectedThemeChanged(string value)
+    {
+        if (Enum.TryParse(value, ignoreCase: true, out AppTheme theme))
+        {
+            ThemeService.SetTheme(theme);
+        }
+    }
+
+    public double DeviceControlsOpacity => IsConnected ? 1.0 : 0.35;
+
+    partial void OnIsConnectedChanged(bool value) => OnPropertyChanged(nameof(DeviceControlsOpacity));
+
     public FlasherViewModel Flasher { get; } = new();
 
     public DashboardViewModel()
@@ -55,6 +73,27 @@ public partial class DashboardViewModel : ObservableObject
             BackToDashboard();
             await ConnectAsync();
         };
+
+        _ = TryAutoConnectAsync();
+    }
+
+    private async Task TryAutoConnectAsync()
+    {
+        try
+        {
+            PortItem? detected = Ports.FirstOrDefault(port => port.IsProxmark && port.IsDetected);
+            if (detected == null)
+            {
+                return;
+            }
+
+            SelectedPort = detected;
+            await ConnectAsync();
+        }
+        catch
+        {
+            // Auto-connect is best-effort and must not affect startup.
+        }
     }
 
     partial void OnSelectedPortChanged(PortItem? value)
@@ -107,22 +146,27 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public async Task ConnectAsync()
     {
+        if (IsConnected || IsBusy)
+        {
+            return;
+        }
+
         if (SelectedPort == null)
         {
             StatusMessage = "No COM port selected.";
             return;
         }
 
+        using var activity = Pm3Activity.Instance.Begin("Connecting to device");
         IsBusy = true;
         HasConnectionError = false;
         StatusMessage = $"Connecting to {SelectedPort.PortName}...";
 
         try
         {
-            Pm3ProcessService.Instance.SetPort(SelectedPort.PortName);
             Flasher.TargetPort = SelectedPort.PortName;
 
-            bool ok = await Pm3ProcessService.Instance.StartInteractiveSessionAsync(SelectedPort.PortName, 12000);
+            bool ok = await Pm3ProcessService.Instance.ConnectAsync(SelectedPort.PortName, 15_000);
             if (!ok)
             {
                 throw new Exception($"Failed to start Proxmark3 session on {SelectedPort.PortName}. Please ensure no other process is holding the port.");
@@ -139,7 +183,7 @@ public partial class DashboardViewModel : ObservableObject
             StatusMessage = $"Connection failed: {ex.Message}";
             IsConnected = false;
             HasConnectionError = true;
-            Pm3ProcessService.Instance.StopInteractiveSession();
+            await Pm3ProcessService.Instance.DisconnectAsync();
         }
         finally
         {
@@ -148,9 +192,9 @@ public partial class DashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void Disconnect()
+    public async Task DisconnectAsync()
     {
-        Pm3ProcessService.Instance.StopInteractiveSession();
+        await Pm3ProcessService.Instance.DisconnectAsync();
         IsConnected = false;
         HasConnectionError = false;
         IsShowingHardwareDetails = false;
@@ -162,6 +206,7 @@ public partial class DashboardViewModel : ObservableObject
     public async Task MeasureAntennaAsync()
     {
         if (SelectedPort == null) return;
+        using var activity = Pm3Activity.Instance.Begin("Tuning antenna");
         IsBusy = true;
         StatusMessage = "Tuning antenna (hw tune)...";
 

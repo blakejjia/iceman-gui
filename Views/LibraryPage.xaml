@@ -1,0 +1,211 @@
+<UserControl x:Class="iceman_gui.Views.LibraryPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <ui:TextBlock Text="Card Library" FontTypography="Title" />
+                <ui:TextBlock Text="Backups saved on this computer. Open one to inspect its sectors, keys or dump file."
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              TextWrapping="Wrap"
+                              Margin="0,4,24,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <ui:Button Content="Import dump" Icon="{ui:SymbolIcon ArrowImport24}"
+                           Command="{Binding ImportCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}"
+                           Command="{Binding RefreshListCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Open dumps folder" Icon="{ui:SymbolIcon FolderOpen24}"
+                           Command="{Binding OpenDumpsFolderCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Status -->
+        <ui:TextBlock Grid.Row="1"
+                      Text="{Binding StatusMessage}"
+                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      FontSize="12"
+                      Margin="0,0,0,12"
+                      Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+        <!-- Empty state -->
+        <Border Grid.Row="2"
+                Visibility="{Binding HasNoEntries, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                CornerRadius="8"
+                Padding="24,40">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="40"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,0,0,12" />
+                <ui:TextBlock Text="No saved cards yet" FontTypography="BodyStrong" FontSize="16"
+                              HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <ui:TextBlock Text="Read a MIFARE Classic card and use 'Back up card' to save it here."
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              FontSize="12"
+                              HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- Library content -->
+        <Grid Grid.Row="2"
+              Visibility="{Binding HasEntries, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Card list -->
+            <ListBox Grid.Column="0"
+                     ItemsSource="{Binding Entries}"
+                     SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,8" />
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Padding="12">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="{Binding DisplayName}"
+                                                  FontTypography="BodyStrong"
+                                                  FontSize="14"
+                                                  TextTrimming="CharacterEllipsis" />
+                                    <Border Grid.Column="1"
+                                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            Visibility="{Binding HasKeys, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <ui:TextBlock Text="keys" FontSize="10"
+                                                      Foreground="{DynamicResource SystemFillColorSuccessBrush}" FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <ui:TextBlock Text="{Binding Uid}" FontFamily="Consolas"
+                                                  FontSize="12" FontWeight="SemiBold" Margin="0,0,10,0" />
+                                    <ui:TextBlock Text="{Binding CardType}"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                  FontSize="12" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <ui:TextBlock Text="{Binding Magic}" FontSize="11"
+                                                  Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                  Margin="0,0,10,0" />
+                                    <ui:TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                                  FontSize="11"
+                                                  Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Details -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" VerticalAlignment="Top">
+                <ui:Card>
+                    <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,12">
+                            <ui:TextBlock Text="Backup details" FontTypography="Subtitle" VerticalAlignment="Center" />
+                            <ui:Button HorizontalAlignment="Right"
+                                       Content="Delete"
+                                       Appearance="Danger"
+                                       Icon="{ui:SymbolIcon Delete24}"
+                                       Command="{Binding DeleteCommand}" />
+                        </Grid>
+
+                        <ui:TextBlock Text="Alias" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Text="{Binding AliasDraft, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="Name this backup"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,8,0" />
+                            <ui:Button Grid.Column="1" Content="Save" Icon="{ui:SymbolIcon Save24}"
+                                       Command="{Binding SaveAliasCommand}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
+                                <ui:TextBlock Text="UID" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding SelectedEntry.Uid}" FontFamily="Consolas" FontTypography="BodyStrong" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
+                                <ui:TextBlock Text="Card type" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding SelectedEntry.CardType}" FontTypography="BodyStrong" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0">
+                                <ui:TextBlock Text="Magic mode" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding SelectedEntry.Magic}" FontTypography="BodyStrong" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1">
+                                <ui:TextBlock Text="Backed up" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:TextBlock Text="{Binding SelectedEntry.CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" FontTypography="BodyStrong" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="6"
+                                Padding="12,8"
+                                Margin="0,0,0,16">
+                            <ui:TextBlock Text="{Binding CardSummary}" FontSize="12"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap" />
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:Button Content="Edit full card" Appearance="Primary"
+                                       Icon="{ui:SymbolIcon Save24}"
+                                       Command="{Binding WriteToCardCommand}" Margin="0,0,8,0" />
+                            <ui:Button Content="Open JSON" Icon="{ui:SymbolIcon DocumentText24}"
+                                       Command="{Binding OpenJsonCommand}" Margin="0,0,8,0" />
+                            <ui:Button Content="Folder" Icon="{ui:SymbolIcon FolderOpen24}"
+                                       Command="{Binding OpenFolderCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

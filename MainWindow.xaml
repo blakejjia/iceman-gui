@@ -66,26 +66,83 @@
                 </Grid>
             </ui:NavigationView.PaneHeader>
 
-            <!-- Progressive Disclosure Menu Items -->
+            <!-- Menu Items -->
             <ui:NavigationView.MenuItems>
                 <!-- Dashboard (Always visible) -->
                 <ui:NavigationViewItem x:Name="NavDashboard"
-                                       Content="Dashboard"
                                        Tag="dashboard"
                                        Click="OnNavClick">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
+                    <ui:NavigationViewItem.Content>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:TextBlock Text="Device" VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource SystemFillColorSuccessBackgroundBrush}"
+                                    BorderBrush="{DynamicResource SystemFillColorSuccessBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="6,1"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Device connected"
+                                    Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="CheckmarkCircle16" FontSize="11"
+                                                   Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,4,0"
+                                                   VerticalAlignment="Center" />
+                                    <ui:TextBlock Text="Connected" FontSize="10"
+                                                  Foreground="{DynamicResource SystemFillColorSuccessBrush}" FontWeight="SemiBold"
+                                                  VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ui:NavigationViewItem.Content>
                 </ui:NavigationViewItem>
 
-                <!-- Tag Scanner (Visible once machine is connected) -->
+                <!-- Read Card (visible but greyed out until a device is connected) -->
                 <ui:NavigationViewItem x:Name="NavScanner"
-                                       Content="Tag Scanner"
+                                       Content="Read Card"
                                        Tag="scanner"
                                        Click="OnNavClick"
-                                       Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Search24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Full-card write wizard -->
+                <ui:NavigationViewItem x:Name="NavWrite"
+                                       Content="Edit Full Card"
+                                       Tag="write"
+                                       Click="OnNavClick"
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Save24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- UID-only editor -->
+                <ui:NavigationViewItem x:Name="NavEditUid"
+                                       Content="Edit UID"
+                                       Tag="edituid"
+                                       Click="OnNavClick"
+                                       IsEnabled="{Binding IsConnected}"
+                                       Opacity="{Binding DeviceUiOpacity}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Edit24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
+                <!-- Card Library (works offline) -->
+                <ui:NavigationViewItem x:Name="NavLibrary"
+                                       Content="Library"
+                                       Tag="library"
+                                       Click="OnNavClick">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="FolderOpen24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
@@ -103,13 +160,6 @@
             <!-- Page Container Overlay -->
             <ui:NavigationView.ContentOverlay>
                 <Grid>
-                    <!-- Global Activity Bar (fluent indeterminate glowing bar at top of window when any operation is running) -->
-                    <ProgressBar Height="2.5"
-                                 VerticalAlignment="Top"
-                                 IsIndeterminate="True"
-                                 Visibility="{Binding IsAppBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                 Panel.ZIndex="999" />
-
                     <!-- Dashboard Page -->
                     <Border Style="{StaticResource FluentEntranceStyle}"
                             Visibility="{Binding IsDashboardActive, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -122,11 +172,24 @@
                         <views:TagScannerPage DataContext="{Binding TagScanner}" />
                     </Border>
 
-                    <!-- Mifare Toolkit Page -->
+                    <!-- Edit Full Card Page -->
                     <Border Style="{StaticResource FluentEntranceStyle}"
-                            Visibility="{Binding IsMifareActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <views:MifareToolkitPage DataContext="{Binding MifareToolkit}" />
+                            Visibility="{Binding IsWriteActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:WritePage DataContext="{Binding Write}" />
                     </Border>
+
+                    <!-- Edit UID Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsEditUidActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:EditUidPage DataContext="{Binding EditUid}" />
+                    </Border>
+
+                    <!-- Card Library Page -->
+                    <Border Style="{StaticResource FluentEntranceStyle}"
+                            Visibility="{Binding IsLibraryActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <views:LibraryPage DataContext="{Binding Library}" />
+                    </Border>
+
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
@@ -134,11 +197,36 @@
         <!-- Global Status Bar -->
         <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="10" Height="10" Fill="LimeGreen" Margin="0,0,8,0" />
+                    <Ellipse Width="10" Height="10" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
                     <ui:TextBlock Text="{Binding ActivePort, StringFormat='Port: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="•" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                     <ui:TextBlock Text="Iceman/master RRG" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Dedicated PM3 activity area: always visible at the bottom right -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding Activity.IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:ProgressRing Width="14" Height="14" IsIndeterminate="True" Margin="0,0,8,0" />
+                    <ui:TextBlock Text="{Binding Activity.Description, StringFormat='PM3 · {0}'}"
+                                  FontSize="12"
+                                  Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 </StackPanel>
             </Grid>
         </Border>
